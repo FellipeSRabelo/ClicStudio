@@ -57,14 +57,12 @@ export function Layout() {
         {/* Header */}
         <div className={cn(
           'flex items-center border-b border-gray-800',
-          collapsed ? 'justify-center px-2 py-5' : 'gap-3 px-6 py-5'
+          collapsed ? 'justify-center px-2 py-5' : 'px-4 py-4'
         )}>
-          <img src="/icons/icone192.png" alt="ClicStudio" className="h-9 w-9 rounded-lg shrink-0 object-cover" />
-          {!collapsed && (
-            <div className="min-w-0">
-              <h1 className="text-lg font-bold text-white">ClicStudio</h1>
-              <p className="text-xs text-gray-500">Gestão de Agenda</p>
-            </div>
+          {collapsed ? (
+            <img src="/icons/icone192.png" alt="ClicStudio" className="h-9 w-9 rounded-lg shrink-0 object-cover" />
+          ) : (
+            <img src="/icons/semfundo_horizontal.png" alt="ClicStudio" className="h-10 w-auto object-contain" />
           )}
         </div>
 

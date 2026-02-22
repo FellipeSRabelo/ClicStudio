@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icone192.png', 'icons/clicstudio_semfundo.png'],
+      includeAssets: ['icons/icone192.png', 'icons/icone512.png'],
       manifest: {
         name: 'ClicStudio',
         short_name: 'ClicStudio',
@@ -21,17 +21,17 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icons/clicstudio_semfundo.png',
+            src: '/icons/icone512.png',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/icons/clicstudio_semfundo.png',
+            src: '/icons/icone512.png',
             sizes: '512x512',
             type: 'image/png',
           },
           {
-            src: '/icons/clicstudio_semfundo.png',
+            src: '/icons/icone512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
