@@ -63,6 +63,7 @@ CREATE TABLE tarefas (
   hora_inicio TIME,
   hora_fim TIME,
   local VARCHAR(255),
+  link_galeria TEXT,
   realizado BOOLEAN DEFAULT false,
   observacoes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),

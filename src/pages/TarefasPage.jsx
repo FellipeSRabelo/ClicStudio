@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { format } from 'date-fns'
+import { useState, useCallback, useMemo } from 'react'
+import { format, isToday, isTomorrow, startOfWeek, endOfWeek, isWithinInterval, addDays, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   Plus,
@@ -9,6 +9,11 @@ import {
   CheckCircle2,
   Circle,
   Search,
+  Filter,
+  X,
+  CalendarDays,
+  CalendarRange,
+  Clock,
 } from 'lucide-react'
 import { useSupabaseQuery, useSupabaseMutation, useRealtimeSubscription } from '../hooks/useSupabase'
 import { Button } from '../components/ui/Button'
@@ -17,25 +22,43 @@ import { Table, LoadingSpinner, EmptyState, Badge } from '../components/ui/Card'
 import { TarefaModal } from '../components/tarefas/TarefaModal'
 import { supabase } from '../lib/supabase'
 
+const QUICK_PERIODS = [
+  { key: 'today', label: 'Hoje', icon: Clock },
+  { key: 'tomorrow', label: 'Amanhã', icon: CalendarDays },
+  { key: 'week', label: 'Esta Semana', icon: CalendarRange },
+]
+
 export function TarefasPage() {
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Filtros
+  const [quickPeriod, setQuickPeriod] = useState(null) // 'today' | 'tomorrow' | 'week' | null
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [filtroClientes, setFiltroClientes] = useState([])
+  const [filtroTipos, setFiltroTipos] = useState([])
 
   const { data: tarefas, loading, refetch } = useSupabaseQuery('tarefas', {
-    select: '*, clientes(nome), tipos_tarefa(nome, cor), funcionarios(nome, cor)',
+    select: '*, clientes(nome, telefone), tipos_tarefa(nome, cor, icone), funcionarios(nome, cor)',
     orderBy: 'data_prazo',
     ascending: true,
   })
 
   const { data: clientes } = useSupabaseQuery('clientes', {
     filters: [{ column: 'ativo', operator: 'eq', value: true }],
+    orderBy: 'nome',
+    ascending: true,
   })
   const { data: funcionarios } = useSupabaseQuery('funcionarios', {
     filters: [{ column: 'ativo', operator: 'eq', value: true }],
   })
   const { data: tiposTarefa } = useSupabaseQuery('tipos_tarefa', {
     filters: [{ column: 'ativo', operator: 'eq', value: true }],
+    orderBy: 'nome',
+    ascending: true,
   })
 
   const handleRealtime = useCallback(() => refetch(), [refetch])
@@ -46,11 +69,93 @@ export function TarefasPage() {
     refetch()
   }
 
-  const filteredTarefas = tarefas.filter((t) =>
-    t.descricao.toLowerCase().includes(search.toLowerCase()) ||
-    t.clientes?.nome?.toLowerCase().includes(search.toLowerCase()) ||
-    t.funcionarios?.nome?.toLowerCase().includes(search.toLowerCase())
-  )
+  // Selecionar período rápido (sobrescreve intervalo customizado)
+  const selectQuickPeriod = (key) => {
+    if (quickPeriod === key) {
+      setQuickPeriod(null)
+    } else {
+      setQuickPeriod(key)
+      setDateFrom('')
+      setDateTo('')
+    }
+  }
+
+  // Quando define intervalo customizado, limpa período rápido
+  const handleDateFrom = (v) => {
+    setDateFrom(v)
+    setQuickPeriod(null)
+  }
+  const handleDateTo = (v) => {
+    setDateTo(v)
+    setQuickPeriod(null)
+  }
+
+  const toggleCliente = (id) => {
+    setFiltroClientes((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    )
+  }
+
+  const toggleTipo = (id) => {
+    setFiltroTipos((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
+    )
+  }
+
+  const clearAllFilters = () => {
+    setQuickPeriod(null)
+    setDateFrom('')
+    setDateTo('')
+    setFiltroClientes([])
+    setFiltroTipos([])
+    setSearch('')
+  }
+
+  // Filtros combinados
+  const filteredTarefas = useMemo(() => {
+    return tarefas.filter((t) => {
+      // Busca texto
+      if (search) {
+        const s = search.toLowerCase()
+        const match =
+          t.descricao.toLowerCase().includes(s) ||
+          t.clientes?.nome?.toLowerCase().includes(s) ||
+          t.funcionarios?.nome?.toLowerCase().includes(s) ||
+          t.local?.toLowerCase().includes(s)
+        if (!match) return false
+      }
+
+      // Filtro por data (período rápido ou intervalo customizado)
+      if (quickPeriod) {
+        const d = parseISO(t.data_prazo)
+        if (quickPeriod === 'today' && !isToday(d)) return false
+        if (quickPeriod === 'tomorrow' && !isTomorrow(d)) return false
+        if (quickPeriod === 'week') {
+          const now = new Date()
+          const ws = startOfWeek(now, { weekStartsOn: 1 })
+          const we = endOfWeek(now, { weekStartsOn: 1 })
+          if (!isWithinInterval(d, { start: ws, end: we })) return false
+        }
+      } else {
+        if (dateFrom && t.data_prazo < dateFrom) return false
+        if (dateTo && t.data_prazo > dateTo) return false
+      }
+
+      // Filtro por cliente
+      if (filtroClientes.length > 0 && !filtroClientes.includes(t.cliente_id)) return false
+
+      // Filtro por tipo
+      if (filtroTipos.length > 0 && !filtroTipos.includes(t.tipo_tarefa_id)) return false
+
+      return true
+    })
+  }, [tarefas, search, quickPeriod, dateFrom, dateTo, filtroClientes, filtroTipos])
+
+  const activeFiltersCount =
+    (quickPeriod ? 1 : 0) +
+    (dateFrom || dateTo ? 1 : 0) +
+    filtroClientes.length +
+    filtroTipos.length
 
   if (loading) return <LoadingSpinner />
 
@@ -60,33 +165,181 @@ export function TarefasPage() {
         <div className="flex items-center gap-2">
           <ClipboardList size={20} className="text-primary-light" />
           <h1 className="text-xl font-bold text-white">Tarefas</h1>
-          <span className="text-sm text-gray-500">({tarefas.length})</span>
+          <span className="text-sm text-gray-500">({filteredTarefas.length}/{tarefas.length})</span>
         </div>
-        <Button onClick={() => { setEditing(null); setShowModal(true) }}>
-          <Plus size={16} /> Nova Tarefa
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors cursor-pointer ${
+              showFilters || activeFiltersCount > 0
+                ? 'bg-primary/15 text-primary-light'
+                : 'text-gray-400 hover:text-white hover:bg-surface-light'
+            }`}
+          >
+            <Filter size={15} />
+            <span className="hidden sm:inline">Filtros</span>
+            {activeFiltersCount > 0 && (
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-xs font-bold">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+          <Button onClick={() => { setEditing(null); setShowModal(true) }}>
+            <Plus size={16} /> Nova Tarefa
+          </Button>
+        </div>
       </div>
 
+      {/* Barra de busca */}
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
         <input
           type="text"
-          placeholder="Buscar tarefas..."
+          placeholder="Buscar tarefas, clientes, responsáveis..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full rounded-lg border border-gray-700 bg-surface-light pl-10 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:border-primary focus:outline-none"
         />
       </div>
 
+      {/* Painel de filtros */}
+      {showFilters && (
+        <div className="rounded-xl border border-gray-800 bg-surface p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-400 flex items-center gap-1.5">
+              <Filter size={14} /> Filtros Avançados
+            </span>
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-primary-light hover:text-white transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <X size={12} /> Limpar tudo
+              </button>
+            )}
+          </div>
+
+          {/* Período rápido */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Período Rápido
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {QUICK_PERIODS.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => selectQuickPeriod(p.key)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                    quickPeriod === p.key
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-light text-gray-400 hover:text-white hover:bg-surface-lighter'
+                  }`}
+                >
+                  <p.icon size={13} />
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Intervalo customizado */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Intervalo Customizado
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => handleDateFrom(e.target.value)}
+                className="rounded-lg border border-gray-700 bg-surface-light px-3 py-1.5 text-xs text-white focus:border-primary focus:outline-none"
+              />
+              <span className="text-xs text-gray-500">até</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => handleDateTo(e.target.value)}
+                className="rounded-lg border border-gray-700 bg-surface-light px-3 py-1.5 text-xs text-white focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Filtro por Cliente e Tipo lado a lado */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Cliente */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Cliente
+              </label>
+              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                {clientes.map((c) => (
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-2 cursor-pointer text-xs text-gray-300 hover:text-white transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filtroClientes.includes(c.id)}
+                      onChange={() => toggleCliente(c.id)}
+                      className="w-3.5 h-3.5 rounded border-gray-600 cursor-pointer accent-primary"
+                    />
+                    <span className="truncate">{c.nome}</span>
+                  </label>
+                ))}
+                {clientes.length === 0 && (
+                  <p className="text-xs text-gray-600">Nenhum cliente</p>
+                )}
+              </div>
+            </div>
+
+            {/* Tipo de Tarefa */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Tipo de Tarefa
+              </label>
+              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                {tiposTarefa.map((tipo) => (
+                  <label
+                    key={tipo.id}
+                    className="flex items-center gap-2 cursor-pointer text-xs text-gray-300 hover:text-white transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filtroTipos.includes(tipo.id)}
+                      onChange={() => toggleTipo(tipo.id)}
+                      className="w-3.5 h-3.5 rounded border-gray-600 cursor-pointer accent-primary"
+                    />
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: tipo.cor }}
+                    />
+                    <span className="truncate">{tipo.nome}</span>
+                  </label>
+                ))}
+                {tiposTarefa.length === 0 && (
+                  <p className="text-xs text-gray-600">Nenhum tipo</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {filteredTarefas.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title="Nenhuma tarefa encontrada"
-          description="Crie sua primeira tarefa"
+          description={activeFiltersCount > 0 ? "Tente ajustar os filtros" : "Crie sua primeira tarefa"}
           action={
-            <Button onClick={() => { setEditing(null); setShowModal(true) }}>
-              <Plus size={16} /> Nova Tarefa
-            </Button>
+            activeFiltersCount > 0 ? (
+              <Button variant="secondary" onClick={clearAllFilters}>
+                <X size={16} /> Limpar Filtros
+              </Button>
+            ) : (
+              <Button onClick={() => { setEditing(null); setShowModal(true) }}>
+                <Plus size={16} /> Nova Tarefa
+              </Button>
+            )
           }
         />
       ) : (

@@ -28,6 +28,7 @@ export function TarefaModal({
     hora_inicio: '',
     hora_fim: '',
     local: '',
+    link_galeria: '',
     realizado: false,
     observacoes: '',
   })
@@ -43,6 +44,7 @@ export function TarefaModal({
         hora_inicio: tarefa.hora_inicio?.slice(0, 5) || '',
         hora_fim: tarefa.hora_fim?.slice(0, 5) || '',
         local: tarefa.local || '',
+        link_galeria: tarefa.link_galeria || '',
         realizado: tarefa.realizado || false,
         observacoes: tarefa.observacoes || '',
       })
@@ -56,6 +58,7 @@ export function TarefaModal({
         hora_inicio: '',
         hora_fim: '',
         local: '',
+        link_galeria: '',
         realizado: false,
         observacoes: '',
       })
@@ -76,6 +79,7 @@ export function TarefaModal({
       funcionario_id: form.funcionario_id || null,
       hora_inicio: form.hora_inicio || null,
       hora_fim: form.hora_fim || null,
+      link_galeria: form.link_galeria || null,
     }
 
     if (tarefa) {
@@ -176,6 +180,13 @@ export function TarefaModal({
             onChange={(e) => handleChange('local', e.target.value)}
           />
         </div>
+
+        <Input
+          label="Link da Galeria / Entrega"
+          placeholder="https://drive.google.com/..."
+          value={form.link_galeria}
+          onChange={(e) => handleChange('link_galeria', e.target.value)}
+        />
 
         <Textarea
           label="Observações"

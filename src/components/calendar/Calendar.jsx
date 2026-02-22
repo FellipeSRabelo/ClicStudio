@@ -297,6 +297,9 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
                       <span className="font-medium">{tarefa.hora_inicio?.slice(0, 5)} </span>
                     )}
                     <span className="truncate">{tarefa.descricao}</span>
+                    {tarefa.clientes?.nome && (
+                      <span className="text-gray-400 ml-1 shrink-0">• {tarefa.clientes.nome}</span>
+                    )}
                     {isExpandedView && tarefa.funcionarios?.nome && (
                       <span className="text-gray-500 ml-1 shrink-0">• {tarefa.funcionarios.nome}</span>
                     )}
