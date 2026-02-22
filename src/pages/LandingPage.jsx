@@ -274,7 +274,7 @@ export function LandingPage() {
 
   /* ─── Hero ─── */
   const Hero = () => (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden mt-40 pt-20">
       {/* bg glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[#5d109c]/20 rounded-full blur-[160px]" />
@@ -306,7 +306,7 @@ export function LandingPage() {
           </p>
 
           {/* CTAs */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-10 mb-40 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={() => scrollTo('pricing')}
               className="group w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-[#5d109c] to-[#7c3aed] text-white font-semibold text-base shadow-xl shadow-purple-700/20 hover:shadow-purple-600/40 transition-all cursor-pointer flex items-center justify-center gap-2"
@@ -331,7 +331,7 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="mt-16 max-w-4xl mx-auto"
+          className="mt-16 max-w-6xl mx-auto"
         >
           <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl shadow-purple-900/20">
             <video
@@ -342,7 +342,7 @@ export function LandingPage() {
               playsInline
               poster=""
             >
-              <source src="http://agenciabuffalo.com.br/wp-content/uploads/2026/02/pcdashboard.mp4" type="video/mp4" />
+              <source src="http://agenciabuffalo.com.br/wp-content/uploads/2026/02/editadoclicstudio.mp4" type="video/mp4" />
               Seu navegador não suporta vídeo.
             </video>
           </div>
