@@ -31,6 +31,7 @@ CREATE TABLE funcionarios (
   telefone VARCHAR(50),
   cargo VARCHAR(255),
   cor VARCHAR(7) DEFAULT '#5d109c',
+  auth_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   ativo BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

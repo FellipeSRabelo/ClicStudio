@@ -9,8 +9,9 @@ import {
   Tv,
   LogOut,
   Menu,
-  X,
   Camera,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { cn } from '../../lib/utils'
@@ -26,6 +27,7 @@ const navItems = [
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const { signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -47,48 +49,76 @@ export function Layout() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 w-64 bg-surface border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed inset-y-0 left-0 z-30 bg-surface border-r border-gray-800 transform transition-all duration-200 lg:relative lg:translate-x-0 flex flex-col',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+          collapsed ? 'w-[68px]' : 'w-64'
         )}
       >
-        <div className="flex items-center gap-3 border-b border-gray-800 px-6 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+        {/* Header */}
+        <div className={cn(
+          'flex items-center border-b border-gray-800',
+          collapsed ? 'justify-center px-2 py-5' : 'gap-3 px-6 py-5'
+        )}>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shrink-0">
             <Camera size={20} className="text-white" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">ClicStudio</h1>
-            <p className="text-xs text-gray-500">Gestão de Agenda</p>
-          </div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-white">ClicStudio</h1>
+              <p className="text-xs text-gray-500">Gestão de Agenda</p>
+            </div>
+          )}
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        {/* Nav items */}
+        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               onClick={() => setSidebarOpen(false)}
+              title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                  'flex items-center rounded-lg py-2.5 text-sm font-medium transition-colors',
+                  collapsed ? 'justify-center px-2' : 'gap-3 px-3',
                   isActive
                     ? 'bg-primary/15 text-primary-light'
                     : 'text-gray-400 hover:bg-surface-light hover:text-white'
                 )
               }
             >
-              <item.icon size={18} />
-              {item.label}
+              <item.icon size={18} className="shrink-0" />
+              {!collapsed && <span>{item.label}</span>}
             </NavLink>
           ))}
         </nav>
 
-        <div className="border-t border-gray-800 p-3">
+        {/* Footer */}
+        <div className="border-t border-gray-800 p-2 space-y-1">
+          {/* Collapse toggle - desktop only */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className={cn(
+              'hidden lg:flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-gray-400 hover:bg-surface-light hover:text-white transition-colors cursor-pointer',
+              collapsed ? 'justify-center px-2' : 'gap-3 px-3'
+            )}
+            title={collapsed ? 'Expandir menu' : 'Minimizar menu'}
+          >
+            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            {!collapsed && <span>Minimizar</span>}
+          </button>
+
           <button
             onClick={handleSignOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 hover:bg-surface-light hover:text-white transition-colors cursor-pointer"
+            title={collapsed ? 'Sair' : undefined}
+            className={cn(
+              'flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-gray-400 hover:bg-surface-light hover:text-white transition-colors cursor-pointer',
+              collapsed ? 'justify-center px-2' : 'gap-3 px-3'
+            )}
           >
-            <LogOut size={18} />
-            Sair
+            <LogOut size={18} className="shrink-0" />
+            {!collapsed && <span>Sair</span>}
           </button>
         </div>
       </aside>
