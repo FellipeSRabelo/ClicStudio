@@ -8,7 +8,6 @@ import {
   ClipboardList,
   LogOut,
   Menu,
-  Camera,
   PanelLeftClose,
   PanelLeftOpen,
   Download,
@@ -60,9 +59,7 @@ export function Layout() {
           'flex items-center border-b border-gray-800',
           collapsed ? 'justify-center px-2 py-5' : 'gap-3 px-6 py-5'
         )}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shrink-0">
-            <Camera size={20} className="text-white" />
-          </div>
+          <img src="/icons/icone192.png" alt="ClicStudio" className="h-9 w-9 rounded-lg shrink-0 object-cover" />
           {!collapsed && (
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-white">ClicStudio</h1>
