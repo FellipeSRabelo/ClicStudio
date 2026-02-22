@@ -33,12 +33,10 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <img
-            src="/icons/clicstudio_logo.jpg"
+            src="/icons/branco_semfundo.png"
             alt="ClicStudio"
-            className="h-20 w-20 rounded-2xl mx-auto mb-4 object-cover"
+            className="h-50 w-50 rounded-2xl mx-auto mb-4 object-cover"
           />
-          <h1 className="text-2xl font-bold text-white">ClicStudio</h1>
-          <p className="text-sm text-gray-500 mt-1">Gestão de Agenda do Estúdio</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
