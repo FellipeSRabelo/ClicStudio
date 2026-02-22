@@ -23,6 +23,31 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa
     return LUCIDE_ICONS[iconName] || Camera
   }
   const getFuncName = (id) => funcionarios.find((f) => f.id === id)?.nome || 'Sem responsável'
+  const getFuncPhone = (id) => {
+    const f = funcionarios.find((f) => f.id === id)
+    return f?.telefone ? f.telefone.replace(/\D/g, '') : null
+  }
+
+  const buildWhatsAppReminder = (tarefa) => {
+    const dataFormatada = format(day, "dd/MM/yyyy (EEEE)", { locale: ptBR })
+    const horario = tarefa.hora_inicio
+      ? `${tarefa.hora_inicio.slice(0, 5)}${tarefa.hora_fim ? ' às ' + tarefa.hora_fim.slice(0, 5) : ''}`
+      : 'Horário a definir'
+    const tipo = getTypeName(tarefa.tipo_tarefa_id)
+    const cliente = tarefa.clientes?.nome || ''
+    const local = tarefa.local || ''
+
+    let msg = `📋 *Lembrete ClicStudio*\n\n`
+    msg += `*${tarefa.descricao}*\n`
+    msg += `📅 ${dataFormatada}\n`
+    msg += `⏰ ${horario}\n`
+    msg += `🏷️ ${tipo}\n`
+    if (cliente) msg += `👤 Cliente: ${cliente}\n`
+    if (local) msg += `📍 Local: ${local}\n`
+    if (tarefa.observacoes) msg += `\n📝 ${tarefa.observacoes}\n`
+
+    return encodeURIComponent(msg)
+  }
 
   const formatPhone = (phone) => {
     if (!phone) return null
@@ -103,7 +128,26 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa
                         )}
                         <span className="flex items-center gap-1">
                           <User size={12} />
-                          {getFuncName(tarefa.funcionario_id)}
+                          {(() => {
+                            const funcNome = getFuncName(tarefa.funcionario_id)
+                            const funcPhone = getFuncPhone(tarefa.funcionario_id)
+                            if (funcPhone) {
+                              return (
+                                <a
+                                  href={`https://wa.me/55${funcPhone}?text=${buildWhatsAppReminder(tarefa)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-green-500 hover:text-green-400 transition-colors"
+                                  title="Enviar lembrete pelo WhatsApp"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {funcNome}
+                                  <MessageCircle size={11} />
+                                </a>
+                              )
+                            }
+                            return funcNome
+                          })()}
                         </span>
                       </div>
 

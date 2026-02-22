@@ -42,7 +42,7 @@ export function TarefasPage() {
   const [filtroTipos, setFiltroTipos] = useState([])
 
   const { data: tarefas, loading, refetch } = useSupabaseQuery('tarefas', {
-    select: '*, clientes(nome, telefone), tipos_tarefa(nome, cor, icone), funcionarios(nome, cor)',
+    select: '*, clientes(nome, telefone), tipos_tarefa(nome, cor, icone), funcionarios(nome, cor, telefone)',
     orderBy: 'data_prazo',
     ascending: true,
   })
