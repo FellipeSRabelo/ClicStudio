@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/LoginPage'
+import { LandingPage } from './pages/LandingPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { TarefasPage } from './pages/TarefasPage'
 import { ClientesPage } from './pages/ClientesPage'
@@ -27,6 +28,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/sobre" element={<LandingPage />} />
         <Route
           path="/login"
           element={
