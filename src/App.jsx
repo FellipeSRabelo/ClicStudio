@@ -3,7 +3,6 @@ import { useAuth } from './hooks/useAuth'
 import { Layout } from './components/layout/Layout'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
-import { TvDashboardPage } from './pages/TvDashboardPage'
 import { TarefasPage } from './pages/TarefasPage'
 import { ClientesPage } from './pages/ClientesPage'
 import { FuncionariosPage } from './pages/FuncionariosPage'
@@ -44,7 +43,6 @@ export default function App() {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="tv" element={<TvDashboardPage />} />
           <Route path="tarefas" element={<TarefasPage />} />
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="funcionarios" element={<FuncionariosPage />} />

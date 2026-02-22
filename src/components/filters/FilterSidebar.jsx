@@ -23,7 +23,7 @@ export function FilterSidebar({
   }
 
   return (
-    <div className="w-56 shrink-0 rounded-xl border border-gray-800 bg-surface p-4 space-y-6 overflow-y-auto hidden lg:block">
+    <div className="w-56 shrink-0 rounded-xl border border-gray-800 bg-surface p-4 space-y-6 overflow-y-auto">
       <div className="flex items-center gap-2 text-sm font-medium text-gray-400">
         <Filter size={16} />
         Filtros

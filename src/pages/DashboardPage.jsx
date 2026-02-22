@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Plus, Calendar as CalendarIcon } from 'lucide-react'
+import { Plus, Calendar as CalendarIcon, Filter, Maximize, Minimize } from 'lucide-react'
 import { Calendar } from '../components/calendar/Calendar'
 import { useSupabaseQuery, useRealtimeSubscription } from '../hooks/useSupabase'
 import { LoadingSpinner } from '../components/ui/Card'
@@ -16,6 +16,7 @@ export function DashboardPage() {
   const [showTarefaModal, setShowTarefaModal] = useState(false)
   const [editingTarefa, setEditingTarefa] = useState(null)
   const [selectedDate, setSelectedDate] = useState(null)
+  const [showFilters, setShowFilters] = useState(false)
 
   // Filtros
   const [filtroFuncionarios, setFiltroFuncionarios] = useState([])
@@ -70,39 +71,81 @@ export function DashboardPage() {
     setShowTarefaModal(true)
   }
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+    } else {
+      document.exitFullscreen()
+    }
+  }
+
+  const activeFiltersCount = filtroFuncionarios.length + filtroTipos.length
+
   if (loadingTarefas) return <LoadingSpinner />
 
   return (
-    <div className="flex gap-4 h-full">
-      {/* Sidebar Filtros */}
-      <FilterSidebar
-        funcionarios={funcionarios}
-        tiposTarefa={tiposTarefa}
-        filtroFuncionarios={filtroFuncionarios}
-        setFiltroFuncionarios={setFiltroFuncionarios}
-        filtroTipos={filtroTipos}
-        setFiltroTipos={setFiltroTipos}
-      />
-
-      {/* Calendário */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <CalendarIcon size={20} className="text-primary-light" />
-            <h1 className="text-xl font-bold text-white">Dashboard</h1>
-          </div>
-          <Button onClick={() => handleNewTarefa(new Date())}>
+    <div className="flex flex-col h-full">
+      {/* Top bar */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <CalendarIcon size={20} className="text-primary-light" />
+          <h1 className="text-xl font-bold text-white">Dashboard</h1>
+          <span className="text-xs text-gray-500 ml-1">• Tempo real</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors cursor-pointer ${
+              showFilters || activeFiltersCount > 0
+                ? 'bg-primary/15 text-primary-light'
+                : 'text-gray-400 hover:text-white hover:bg-surface-light'
+            }`}
+          >
+            <Filter size={15} />
+            <span className="hidden sm:inline">Filtros</span>
+            {activeFiltersCount > 0 && (
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary text-white text-xs font-bold">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            className="rounded-lg p-2 text-gray-400 hover:text-white hover:bg-surface-light transition-colors cursor-pointer"
+            title="Tela cheia (F11)"
+          >
+            <Maximize size={18} />
+          </button>
+          <Button onClick={() => handleNewTarefa(new Date())} size="sm">
             <Plus size={16} />
-            Nova Tarefa
+            <span className="hidden sm:inline">Nova Tarefa</span>
           </Button>
         </div>
+      </div>
 
-        <Calendar
-          tarefas={filteredTarefas}
-          tiposTarefa={tiposTarefa}
-          funcionarios={funcionarios}
-          onDayClick={handleDayClick}
-        />
+      {/* Content area */}
+      <div className="flex gap-4 flex-1 min-h-0">
+        {/* Sidebar Filtros (toggle) */}
+        {showFilters && (
+          <FilterSidebar
+            funcionarios={funcionarios}
+            tiposTarefa={tiposTarefa}
+            filtroFuncionarios={filtroFuncionarios}
+            setFiltroFuncionarios={setFiltroFuncionarios}
+            filtroTipos={filtroTipos}
+            setFiltroTipos={setFiltroTipos}
+          />
+        )}
+
+        {/* Calendário */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <Calendar
+            tarefas={filteredTarefas}
+            tiposTarefa={tiposTarefa}
+            funcionarios={funcionarios}
+            onDayClick={handleDayClick}
+          />
+        </div>
       </div>
 
       {/* Modal detalhe do dia */}

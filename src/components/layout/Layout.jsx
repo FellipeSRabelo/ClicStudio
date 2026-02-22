@@ -6,7 +6,6 @@ import {
   UserCircle,
   Tag,
   ClipboardList,
-  Tv,
   LogOut,
   Menu,
   Camera,
@@ -18,7 +17,6 @@ import { cn } from '../../lib/utils'
 
 const navItems = [
   { to: '/', icon: Calendar, label: 'Dashboard' },
-  { to: '/tv', icon: Tv, label: 'Dashboard TV' },
   { to: '/tarefas', icon: ClipboardList, label: 'Tarefas' },
   { to: '/clientes', icon: Users, label: 'Clientes' },
   { to: '/funcionarios', icon: UserCircle, label: 'Funcionários' },
