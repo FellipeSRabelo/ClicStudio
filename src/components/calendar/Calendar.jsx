@@ -11,22 +11,108 @@ import {
   isToday,
   addMonths,
   subMonths,
+  addWeeks,
+  subWeeks,
+  addDays,
+  subDays,
+  getDay,
+  nextSaturday,
+  previousSaturday,
+  isSaturday,
+  isSunday,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Sun, Clock } from 'lucide-react'
 import { cn } from '../../lib/utils'
-import { Badge } from '../ui/Card'
+
+const VIEW_MODES = [
+  { key: 'month', label: 'Mensal', icon: CalendarDays },
+  { key: 'week', label: 'Semanal', icon: CalendarRange },
+  { key: 'weekend', label: 'Fim de Semana', icon: Sun },
+  { key: 'day', label: 'Diário', icon: Clock },
+]
 
 export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], onDayClick, darkMode = false }) {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [viewMode, setViewMode] = useState('month')
 
+  // Navigation functions per view mode
+  const goBack = () => {
+    if (viewMode === 'month') setCurrentDate(subMonths(currentDate, 1))
+    else if (viewMode === 'week') setCurrentDate(subWeeks(currentDate, 1))
+    else if (viewMode === 'weekend') {
+      // Go to previous weekend (Saturday)
+      const prevSat = previousSaturday(isSaturday(currentDate) ? subDays(currentDate, 1) : currentDate)
+      setCurrentDate(prevSat)
+    }
+    else if (viewMode === 'day') setCurrentDate(subDays(currentDate, 1))
+  }
+
+  const goForward = () => {
+    if (viewMode === 'month') setCurrentDate(addMonths(currentDate, 1))
+    else if (viewMode === 'week') setCurrentDate(addWeeks(currentDate, 1))
+    else if (viewMode === 'weekend') {
+      // Go to next weekend (Saturday)
+      const nxtSat = nextSaturday(isSaturday(currentDate) ? addDays(currentDate, 1) : currentDate)
+      setCurrentDate(nxtSat)
+    }
+    else if (viewMode === 'day') setCurrentDate(addDays(currentDate, 1))
+  }
+
+  const goToday = () => setCurrentDate(new Date())
+
+  // Compute days to show based on view mode
   const days = useMemo(() => {
-    const monthStart = startOfMonth(currentDate)
-    const monthEnd = endOfMonth(currentDate)
-    const calStart = startOfWeek(monthStart, { weekStartsOn: 1 })
-    const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
-    return eachDayOfInterval({ start: calStart, end: calEnd })
-  }, [currentDate])
+    if (viewMode === 'month') {
+      const monthStart = startOfMonth(currentDate)
+      const monthEnd = endOfMonth(currentDate)
+      const calStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+      const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+      return eachDayOfInterval({ start: calStart, end: calEnd })
+    }
+    if (viewMode === 'week') {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 })
+      return eachDayOfInterval({ start: weekStart, end: weekEnd })
+    }
+    if (viewMode === 'weekend') {
+      // Find the Saturday of the current week or the selected Saturday
+      let sat
+      if (isSaturday(currentDate)) {
+        sat = currentDate
+      } else if (isSunday(currentDate)) {
+        sat = subDays(currentDate, 1)
+      } else {
+        sat = nextSaturday(currentDate)
+      }
+      const sun = addDays(sat, 1)
+      return [sat, sun]
+    }
+    // day
+    return [currentDate]
+  }, [currentDate, viewMode])
+
+  // Header title per view mode
+  const headerTitle = useMemo(() => {
+    if (viewMode === 'month') {
+      return format(currentDate, 'MMMM yyyy', { locale: ptBR })
+    }
+    if (viewMode === 'week') {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 })
+      const sameMonth = weekStart.getMonth() === weekEnd.getMonth()
+      if (sameMonth) {
+        return `${format(weekStart, 'd')} - ${format(weekEnd, "d 'de' MMMM yyyy", { locale: ptBR })}`
+      }
+      return `${format(weekStart, "d MMM", { locale: ptBR })} - ${format(weekEnd, "d MMM yyyy", { locale: ptBR })}`
+    }
+    if (viewMode === 'weekend') {
+      const sat = days[0]
+      const sun = days[1]
+      return `${format(sat, "d", { locale: ptBR })} - ${format(sun, "d 'de' MMMM yyyy", { locale: ptBR })}`
+    }
+    return format(currentDate, "EEEE, d 'de' MMMM yyyy", { locale: ptBR })
+  }, [currentDate, viewMode, days])
 
   const tarefasByDay = useMemo(() => {
     const map = {}
@@ -46,56 +132,105 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
     [tiposTarefa]
   )
 
-  const getFuncColor = useCallback(
-    (funcId) => {
-      const func = funcionarios.find((f) => f.id === funcId)
-      return func?.cor || '#5d109c'
-    },
-    [funcionarios]
-  )
-
+  // Grid config per view
+  const gridCols = viewMode === 'month' ? 7 : viewMode === 'week' ? 7 : viewMode === 'weekend' ? 2 : 1
   const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+
+  // Expanded view = week, weekend, day (show more task details)
+  const isExpandedView = viewMode !== 'month'
+
+  // Max visible tasks
+  const maxTasks = isExpandedView ? 20 : darkMode ? 4 : 3
+
+  // Min height per day cell
+  const cellMinHeight = isExpandedView
+    ? (viewMode === 'day' ? 'min-h-[400px]' : 'min-h-[200px]')
+    : darkMode ? 'min-h-[90px] lg:min-h-[120px]' : 'min-h-[80px] lg:min-h-[100px]'
 
   return (
     <div className={cn('flex flex-col h-full', darkMode && 'text-white')}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-          className="rounded-lg p-2 hover:bg-surface-light transition-colors cursor-pointer"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <h2 className="text-xl font-bold capitalize">
-          {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
-        </h2>
-        <button
-          onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-          className="rounded-lg p-2 hover:bg-surface-light transition-colors cursor-pointer"
-        >
-          <ChevronRight size={20} />
-        </button>
+      {/* View mode selector + navigation */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+        {/* View toggle */}
+        <div className="flex items-center gap-1 rounded-lg bg-surface-light p-1">
+          {VIEW_MODES.map((mode) => (
+            <button
+              key={mode.key}
+              onClick={() => setViewMode(mode.key)}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer',
+                viewMode === mode.key
+                  ? 'bg-primary text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-surface-lighter'
+              )}
+            >
+              <mode.icon size={14} />
+              <span className="hidden sm:inline">{mode.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goToday}
+            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-400 hover:text-white hover:bg-surface-light transition-colors cursor-pointer"
+          >
+            Hoje
+          </button>
+          <button
+            onClick={goBack}
+            className="rounded-lg p-1.5 hover:bg-surface-light transition-colors cursor-pointer"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <h2 className="text-base sm:text-lg font-bold capitalize min-w-0 text-center">
+            {headerTitle}
+          </h2>
+          <button
+            onClick={goForward}
+            className="rounded-lg p-1.5 hover:bg-surface-light transition-colors cursor-pointer"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Week days header */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {weekDays.map((d) => (
-          <div key={d} className="text-center text-xs font-medium text-gray-500 py-2">
-            {d}
-          </div>
-        ))}
-      </div>
+      {/* Week days header (only for month and week views) */}
+      {(viewMode === 'month' || viewMode === 'week') && (
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {weekDays.map((d) => (
+            <div key={d} className="text-center text-xs font-medium text-gray-500 py-2">
+              {d}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Weekend header */}
+      {viewMode === 'weekend' && (
+        <div className="grid grid-cols-2 gap-1 mb-1">
+          {['Sábado', 'Domingo'].map((d) => (
+            <div key={d} className="text-center text-xs font-medium text-gray-500 py-2">
+              {d}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-1 flex-1">
+      <div
+        className={cn('grid gap-1 flex-1')}
+        style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+      >
         {days.map((day) => {
           const dateKey = format(day, 'yyyy-MM-dd')
-          const dayTarefas = tarefasByDay[dateKey] || []
-          const isCurrentMonth = isSameMonth(day, currentDate)
+          const dayTarefas = (tarefasByDay[dateKey] || []).sort((a, b) =>
+            (a.hora_inicio || '').localeCompare(b.hora_inicio || '')
+          )
+          const isCurrentMonth = viewMode === 'month' ? isSameMonth(day, currentDate) : true
           const today = isToday(day)
           const hasTasks = dayTarefas.length > 0
-
-          // Determine day background color based on tasks
           const dayColors = [...new Set(dayTarefas.map((t) => getTypeColor(t.tipo_tarefa_id)))]
 
           return (
@@ -103,11 +238,11 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
               key={dateKey}
               onClick={() => onDayClick?.(day, dayTarefas)}
               className={cn(
-                'calendar-day rounded-lg p-1.5 min-h-[80px] lg:min-h-[100px] border border-transparent cursor-pointer transition-all',
+                'calendar-day rounded-lg p-2 border border-transparent cursor-pointer transition-all overflow-y-auto',
+                cellMinHeight,
                 isCurrentMonth ? 'text-white' : 'text-gray-600',
                 today && 'border-primary bg-primary/10',
                 hasTasks && !today && 'border-gray-700',
-                darkMode && 'min-h-[90px] lg:min-h-[120px]'
               )}
               style={
                 hasTasks && !today
@@ -115,20 +250,28 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
                   : {}
               }
             >
-              <div
-                className={cn(
-                  'text-sm font-medium mb-1',
-                  today && 'text-primary-light font-bold'
-                )}
-              >
-                {format(day, 'd')}
+              {/* Day header */}
+              <div className={cn(
+                'font-medium mb-1',
+                isExpandedView ? 'text-base' : 'text-sm',
+                today && 'text-primary-light font-bold'
+              )}>
+                {viewMode === 'day'
+                  ? format(day, "EEEE, d 'de' MMMM", { locale: ptBR })
+                  : isExpandedView
+                    ? format(day, "EEE d", { locale: ptBR })
+                    : format(day, 'd')
+                }
               </div>
-              <div className="space-y-0.5 overflow-hidden">
-                {dayTarefas.slice(0, darkMode ? 4 : 3).map((tarefa) => (
+
+              {/* Tasks list */}
+              <div className={cn('space-y-0.5', isExpandedView && 'space-y-1')}>
+                {dayTarefas.slice(0, maxTasks).map((tarefa) => (
                   <div
                     key={tarefa.id}
                     className={cn(
-                      'truncate rounded px-1 py-0.5 text-xs',
+                      'truncate rounded px-1.5 text-xs',
+                      isExpandedView ? 'py-1.5' : 'py-0.5',
                       tarefa.realizado && 'line-through opacity-60'
                     )}
                     style={{
@@ -141,12 +284,18 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
                       <span className="font-medium">{tarefa.hora_inicio?.slice(0, 5)} </span>
                     )}
                     {tarefa.descricao}
+                    {isExpandedView && tarefa.funcionarios?.nome && (
+                      <span className="text-gray-500 ml-1">• {tarefa.funcionarios.nome}</span>
+                    )}
                   </div>
                 ))}
-                {dayTarefas.length > (darkMode ? 4 : 3) && (
+                {dayTarefas.length > maxTasks && (
                   <div className="text-xs text-gray-500 px-1">
-                    +{dayTarefas.length - (darkMode ? 4 : 3)} mais
+                    +{dayTarefas.length - maxTasks} mais
                   </div>
+                )}
+                {isExpandedView && dayTarefas.length === 0 && (
+                  <p className="text-xs text-gray-600 italic">Sem tarefas</p>
                 )}
               </div>
             </div>
