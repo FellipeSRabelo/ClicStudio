@@ -67,21 +67,21 @@ const features = [
   {
     icon: Tv,
     title: 'Modo TV em Tempo Real',
-    desc: 'Dashboard ao vivo para a equipe acompanhar prazos, tarefas do dia e status — tudo sem precisar de login.',
+    desc: 'Dashboard ao vivo para a equipe acompanhar prazos, tarefas do dia e status.',
   },
   {
     icon: Smartphone,
-    title: 'Acesso PWA Mobile',
+    title: 'Responsivo para Mobile',
     desc: 'Instale direto no celular como um app nativo. Marque tarefas, confira agendas e trabalhe de qualquer lugar.',
   },
   {
     icon: MessageCircle,
     title: 'Integração WhatsApp & Maps',
-    desc: 'Envie mensagens e abra a localização de clientes com um toque. Sem copiar e colar, sem perder tempo.',
+    desc: 'Envie lembretes pelo WhatsApp e abra a localização do cliente com um toque. Sem copiar e colar, sem perder tempo.',
   },
   {
     icon: Image,
-    title: 'Gestão de Galerias',
+    title: 'Gestão de Entrega',
     desc: 'Centralize links de entrega, portfólio e galerias de cada cliente em um só painel organizado.',
   },
 ]
@@ -90,7 +90,7 @@ const testimonials = [
   {
     name: 'Rafael Mendes',
     role: 'Fotógrafo',
-    text: 'O PWA facilita muito marcar tarefas como concluídas direto do set.',
+    text: 'usar pelo Celular facilita muito marcar tarefas como concluídas direto do set.',
     avatar: 'RM',
   },
   {
@@ -102,7 +102,7 @@ const testimonials = [
   {
     name: 'Carlos Britto',
     role: 'Gestor de Agência',
-    text: 'A centralização de clientes e links de galeria economizam horas de chat.',
+    text: 'A centralização de clientes e links dos ensaios economizam horas de chat.',
     avatar: 'CB',
   },
 ]
@@ -117,7 +117,7 @@ const plans = [
     features: [
       'Até 2 funcionários',
       'Calendário Inteligente',
-      'Acesso PWA Mobile',
+      'Responsivo para Mobile',
       'Gestão de Clientes',
       'Suporte por e-mail',
     ],
@@ -133,7 +133,7 @@ const plans = [
     features: [
       'Até 5 funcionários',
       'Modo TV em Tempo Real',
-      'Gestão de Galerias',
+      'Gestão de Entrega',
       'Integração WhatsApp & Maps',
       'Tipos de tarefa ilimitados',
       'Suporte prioritário',
@@ -188,13 +188,12 @@ export function LandingPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5d109c] to-[#7c3aed] flex items-center justify-center">
-              <Camera className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white tracking-tight">
-              Clic<span className="text-[#7c3aed]">Studio</span>
-            </span>
+          <div className="flex items-center">
+            <img
+              src="/icons/semfundo_horizontal.png"
+              alt="ClicStudio"
+              className="h-10 sm:h-12 w-auto"
+            />
           </div>
 
           {/* Links desktop */}
@@ -315,13 +314,37 @@ export function LandingPage() {
               Começar Agora
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button
-              onClick={() => scrollTo('features')}
+            <a
+              href="https://wa.me/5548984217366?text=Ol%C3%A1%2C%20gostaria%20de%20ver%20uma%20demonstra%C3%A7%C3%A3o%20do%20ClicStudio"
+              target="_blank"
+              rel="noopener noreferrer"
               className="group w-full sm:w-auto px-8 py-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur text-gray-300 font-semibold text-base hover:bg-white/10 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               Ver Demonstração
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </a>
+          </div>
+        </motion.div>
+
+        {/* Video */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="mt-16 max-w-4xl mx-auto"
+        >
+          <div className="relative rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl shadow-purple-900/20">
+            <video
+              className="w-full rounded-2xl"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster=""
+            >
+              <source src="http://agenciabuffalo.com.br/wp-content/uploads/2026/02/pcdashboard.mp4" type="video/mp4" />
+              Seu navegador não suporta vídeo.
+            </video>
           </div>
         </motion.div>
 
@@ -329,8 +352,8 @@ export function LandingPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-20 grid grid-cols-3 gap-6 max-w-lg mx-auto"
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="mt-16 grid grid-cols-3 gap-6 max-w-lg mx-auto"
         >
           {[
             ['500+', 'Tarefas gerenciadas'],
@@ -496,16 +519,18 @@ export function LandingPage() {
                     ))}
                   </ul>
 
-                  <button
-                    onClick={() => navigate('/login')}
-                    className={`w-full py-3 rounded-xl font-semibold text-sm transition-all cursor-pointer ${
+                  <a
+                    href={`https://wa.me/5548984217366?text=Ol%C3%A1%2C%20tenho%20interesse%20no%20plano%20${encodeURIComponent(plan.name)}%20do%20ClicStudio`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`block w-full py-3 rounded-xl font-semibold text-sm text-center transition-all cursor-pointer ${
                       plan.highlight
                         ? 'bg-gradient-to-r from-[#5d109c] to-[#7c3aed] text-white shadow-lg shadow-purple-700/25 hover:shadow-purple-600/40'
                         : 'border border-white/10 text-gray-300 bg-white/5 hover:bg-white/10'
                     }`}
                   >
                     {plan.cta}
-                  </button>
+                  </a>
                 </div>
               </div>
             </FadeIn>
@@ -533,15 +558,17 @@ export function LandingPage() {
                 </span>
               </h2>
               <p className="mt-6 text-gray-400 max-w-lg mx-auto text-lg">
-                Crie sua conta em menos de 2 minutos e comece a organizar sua agenda como nunca antes.
+                Entre em contato e comece a organizar sua agenda como nunca antes.
               </p>
-              <button
-                onClick={() => navigate('/login')}
+              <a
+                href="https://wa.me/5548984217366?text=Ol%C3%A1%2C%20quero%20criar%20minha%20conta%20no%20ClicStudio"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-10 group inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-gradient-to-r from-[#5d109c] to-[#7c3aed] text-white font-bold text-lg shadow-xl shadow-purple-700/25 hover:shadow-purple-600/50 transition-all cursor-pointer"
               >
                 Criar minha conta
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -556,13 +583,12 @@ export function LandingPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5d109c] to-[#7c3aed] flex items-center justify-center">
-                <Camera className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-bold text-white">
-                Clic<span className="text-[#7c3aed]">Studio</span>
-              </span>
+            <div className="mb-4">
+              <img
+                src="/icons/semfundo_horizontal.png"
+                alt="ClicStudio"
+                className="h-10 w-auto"
+              />
             </div>
             <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
               Gestão inteligente de agenda para estúdios de fotografia e vídeo.
