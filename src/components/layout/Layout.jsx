@@ -11,8 +11,10 @@ import {
   Camera,
   PanelLeftClose,
   PanelLeftOpen,
+  Download,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { useInstallPWA } from '../../hooks/useInstallPWA'
 import { cn } from '../../lib/utils'
 
 const navItems = [
@@ -27,6 +29,7 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const { signOut } = useAuth()
+  const { canInstall, install } = useInstallPWA()
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
@@ -94,6 +97,21 @@ export function Layout() {
 
         {/* Footer */}
         <div className="border-t border-gray-800 p-2 space-y-1">
+          {/* Instalar App PWA */}
+          {canInstall && (
+            <button
+              onClick={install}
+              title={collapsed ? 'Instalar App' : undefined}
+              className={cn(
+                'flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-primary-light hover:bg-primary/10 transition-colors cursor-pointer',
+                collapsed ? 'justify-center px-2' : 'gap-3 px-3'
+              )}
+            >
+              <Download size={18} className="shrink-0" />
+              {!collapsed && <span>Instalar App</span>}
+            </button>
+          )}
+
           {/* Collapse toggle - desktop only */}
           <button
             onClick={() => setCollapsed(!collapsed)}

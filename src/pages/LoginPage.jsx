@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Loader2 } from 'lucide-react'
+import { Camera, Loader2, Download, CheckCircle2 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useInstallPWA } from '../hooks/useInstallPWA'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 
@@ -11,6 +12,7 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { signIn } = useAuth()
+  const { canInstall, isInstalled, install } = useInstallPWA()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -61,6 +63,23 @@ export function LoginPage() {
             {loading ? <Loader2 size={18} className="animate-spin" /> : 'Entrar'}
           </Button>
         </form>
+
+        {/* PWA Install */}
+        {canInstall && (
+          <button
+            onClick={install}
+            className="mt-6 w-full flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-700 py-3 px-4 text-sm text-gray-400 hover:text-white hover:border-primary hover:bg-primary/5 transition-all cursor-pointer"
+          >
+            <Download size={18} className="text-primary-light" />
+            <span>Instalar App no dispositivo</span>
+          </button>
+        )}
+        {isInstalled && (
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-green-500">
+            <CheckCircle2 size={16} />
+            <span>App instalado!</span>
+          </div>
+        )}
       </div>
     </div>
   )
