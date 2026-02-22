@@ -1,22 +1,24 @@
 import { useState } from 'react'
-import { Plus, Tag, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Tag, Edit2, Trash2, Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart } from 'lucide-react'
 import { useSupabaseQuery, useSupabaseMutation } from '../hooks/useSupabase'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { Table, LoadingSpinner, EmptyState, Badge } from '../components/ui/Card'
 
+const LUCIDE_ICONS = { Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart }
+
 const ICON_OPTIONS = [
-  { value: 'camera', label: 'Câmera' },
-  { value: 'video', label: 'Vídeo' },
-  { value: 'image', label: 'Imagem' },
-  { value: 'film', label: 'Filme' },
-  { value: 'briefcase', label: 'Pasta' },
-  { value: 'users', label: 'Pessoas' },
-  { value: 'package', label: 'Pacote' },
-  { value: 'calendar', label: 'Calendário' },
-  { value: 'star', label: 'Estrela' },
-  { value: 'heart', label: 'Coração' },
+  { value: 'camera', label: 'Câmera', component: 'Camera' },
+  { value: 'video', label: 'Vídeo', component: 'Video' },
+  { value: 'image', label: 'Imagem', component: 'Image' },
+  { value: 'film', label: 'Filme', component: 'Film' },
+  { value: 'briefcase', label: 'Pasta', component: 'Briefcase' },
+  { value: 'users', label: 'Pessoas', component: 'Users' },
+  { value: 'package', label: 'Pacote', component: 'Package' },
+  { value: 'calendar', label: 'Calendário', component: 'CalendarDays' },
+  { value: 'star', label: 'Estrela', component: 'Star' },
+  { value: 'heart', label: 'Coração', component: 'Heart' },
 ]
 
 export function TiposTarefaPage() {
@@ -106,7 +108,16 @@ export function TiposTarefaPage() {
                 <Badge color={tipo.cor}>{tipo.nome}</Badge>
               </td>
               <td className="px-4 py-3 text-sm text-gray-400">
-                {ICON_OPTIONS.find((i) => i.value === tipo.icone)?.label || tipo.icone}
+                {(() => {
+                  const opt = ICON_OPTIONS.find((i) => i.value === tipo.icone)
+                  const IconComp = LUCIDE_ICONS[opt?.component] || Camera
+                  return (
+                    <span className="flex items-center gap-2">
+                      <IconComp size={16} style={{ color: tipo.cor }} />
+                      {opt?.label || tipo.icone}
+                    </span>
+                  )
+                })()}
               </td>
               <td className="px-4 py-3">
                 <span className={`text-xs ${tipo.ativo ? 'text-green-400' : 'text-gray-500'}`}>

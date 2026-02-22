@@ -22,8 +22,11 @@ import {
   isSunday,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Sun, Clock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Sun, Clock, Camera, Video, Image, Film, Briefcase, Users, Package, Star, Heart } from 'lucide-react'
 import { cn } from '../../lib/utils'
+
+const LUCIDE_ICONS = { Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart }
+const ICON_KEY_MAP = { camera: 'Camera', video: 'Video', image: 'Image', film: 'Film', briefcase: 'Briefcase', users: 'Users', package: 'Package', calendar: 'CalendarDays', star: 'Star', heart: 'Heart' }
 
 const VIEW_MODES = [
   { key: 'month', label: 'Mensal', icon: CalendarDays },
@@ -128,6 +131,15 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
     (tipoId) => {
       const tipo = tiposTarefa.find((t) => t.id === tipoId)
       return tipo?.cor || '#5d109c'
+    },
+    [tiposTarefa]
+  )
+
+  const getTypeIcon = useCallback(
+    (tipoId) => {
+      const tipo = tiposTarefa.find((t) => t.id === tipoId)
+      const iconName = ICON_KEY_MAP[tipo?.icone] || 'Camera'
+      return LUCIDE_ICONS[iconName] || Camera
     },
     [tiposTarefa]
   )
@@ -270,7 +282,7 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
                   <div
                     key={tarefa.id}
                     className={cn(
-                      'truncate rounded px-1.5 text-xs',
+                      'flex items-center gap-1 truncate rounded px-1.5 text-xs',
                       isExpandedView ? 'py-1.5' : 'py-0.5',
                       tarefa.realizado && 'line-through opacity-60'
                     )}
@@ -280,12 +292,13 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
                     }}
                     title={tarefa.descricao}
                   >
+                    {(() => { const Icon = getTypeIcon(tarefa.tipo_tarefa_id); return <Icon size={isExpandedView ? 14 : 12} className="shrink-0" /> })()}
                     {tarefa.hora_inicio && (
                       <span className="font-medium">{tarefa.hora_inicio?.slice(0, 5)} </span>
                     )}
-                    {tarefa.descricao}
+                    <span className="truncate">{tarefa.descricao}</span>
                     {isExpandedView && tarefa.funcionarios?.nome && (
-                      <span className="text-gray-500 ml-1">• {tarefa.funcionarios.nome}</span>
+                      <span className="text-gray-500 ml-1 shrink-0">• {tarefa.funcionarios.nome}</span>
                     )}
                   </div>
                 ))}

@@ -1,15 +1,23 @@
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Plus, Edit2, Clock, MapPin, User, CheckCircle2, Circle } from 'lucide-react'
+import { Plus, Edit2, Clock, MapPin, User, CheckCircle2, Circle, Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Card'
+
+const LUCIDE_ICONS = { Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart }
+const ICON_KEY_MAP = { camera: 'Camera', video: 'Video', image: 'Image', film: 'Film', briefcase: 'Briefcase', users: 'Users', package: 'Package', calendar: 'CalendarDays', star: 'Star', heart: 'Heart' }
 
 export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa = [], funcionarios = [], onEdit, onNew }) {
   if (!day) return null
 
   const getTypeName = (id) => tiposTarefa.find((t) => t.id === id)?.nome || 'Sem tipo'
   const getTypeColor = (id) => tiposTarefa.find((t) => t.id === id)?.cor || '#5d109c'
+  const getTypeIcon = (id) => {
+    const tipo = tiposTarefa.find((t) => t.id === id)
+    const iconName = ICON_KEY_MAP[tipo?.icone] || 'Camera'
+    return LUCIDE_ICONS[iconName] || Camera
+  }
   const getFuncName = (id) => funcionarios.find((f) => f.id === id)?.nome || 'Sem responsável'
 
   return (
@@ -37,7 +45,7 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa
                       {tarefa.realizado ? (
                         <CheckCircle2 size={16} className="text-green-500 shrink-0" />
                       ) : (
-                        <Circle size={16} className="text-gray-600 shrink-0" />
+                        (() => { const TypeIcon = getTypeIcon(tarefa.tipo_tarefa_id); return <TypeIcon size={16} className="shrink-0" style={{ color: getTypeColor(tarefa.tipo_tarefa_id) }} /> })()
                       )}
                       <span className={`text-sm font-medium ${tarefa.realizado ? 'line-through text-gray-500' : 'text-white'}`}>
                         {tarefa.descricao}

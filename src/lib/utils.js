@@ -21,3 +21,17 @@ export function formatTime(time) {
 export const TASK_COLORS = {
   default: '#5d109c',
 }
+
+// Mapa de ícone string -> nome do componente Lucide
+export const ICON_MAP = {
+  camera: 'Camera',
+  video: 'Video',
+  image: 'Image',
+  film: 'Film',
+  briefcase: 'Briefcase',
+  users: 'Users',
+  package: 'Package',
+  calendar: 'CalendarDays',
+  star: 'Star',
+  heart: 'Heart',
+}
