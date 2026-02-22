@@ -95,7 +95,7 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa
                       {/* Cliente em destaque */}
                       {clienteNome && (
                         <div className="flex items-center gap-2 ml-6 mb-1.5">
-                          <span className="text-xs font-semibold text-primary-light">
+                          <span className="text-xs font-semibold text-gray-300">
                             {clienteNome}
                           </span>
                           {clienteTelefone && (
@@ -137,12 +137,11 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa
                                   href={`https://wa.me/55${funcPhone}?text=${buildWhatsAppReminder(tarefa)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-green-500 hover:text-green-400 transition-colors"
+                                  className="text-gray-300 hover:text-green-400 transition-colors"
                                   title="Enviar lembrete pelo WhatsApp"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {funcNome}
-                                  <MessageCircle size={11} />
                                 </a>
                               )
                             }
@@ -165,19 +164,18 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa
                           >
                             {tarefa.local}
                           </a>
-                          <Navigation size={10} className="text-gray-600" />
                         </div>
                       )}
 
                       {/* Link da Galeria */}
                       {tarefa.link_galeria && (
                         <div className="flex items-center gap-1.5 ml-6 mt-1.5 text-xs">
-                          <ExternalLink size={12} className="text-primary-light shrink-0" />
+                          <ExternalLink size={12} className="text-gray-400 shrink-0" />
                           <a
                             href={tarefa.link_galeria}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary-light hover:text-white transition-colors underline underline-offset-2 decoration-primary/40 hover:decoration-white truncate"
+                            className="text-gray-300 hover:text-white transition-colors underline underline-offset-2 decoration-gray-600 hover:decoration-white truncate"
                             title="Abrir galeria"
                             onClick={(e) => e.stopPropagation()}
                           >
