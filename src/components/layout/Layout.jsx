@@ -11,6 +11,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Download,
+  Share,
+  Plus,
+  X,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useInstallPWA } from '../../hooks/useInstallPWA'
@@ -28,7 +31,8 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const { signOut } = useAuth()
-  const { canInstall, install } = useInstallPWA()
+  const { canInstall, canInstallIOS, install } = useInstallPWA()
+  const [showIOSModal, setShowIOSModal] = useState(false)
   const navigate = useNavigate()
 
   const handleSignOut = async () => {
@@ -95,7 +99,13 @@ export function Layout() {
           {/* Instalar App PWA */}
           {canInstall && (
             <button
-              onClick={install}
+              onClick={() => {
+                if (canInstallIOS) {
+                  setShowIOSModal(true)
+                } else {
+                  install()
+                }
+              }}
               title={collapsed ? 'Instalar App' : undefined}
               className={cn(
                 'flex w-full items-center rounded-lg py-2.5 text-sm font-medium text-primary-light hover:bg-primary/10 transition-colors cursor-pointer',
@@ -151,6 +161,75 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Modal de instruções iOS */}
+      {showIOSModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowIOSModal(false)}
+          />
+          <div className="relative z-10 w-full max-w-sm mx-4 mb-6 sm:mb-0 bg-surface border border-gray-800 rounded-2xl p-6 shadow-xl">
+            <button
+              onClick={() => setShowIOSModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-4">
+                <Download size={28} className="text-primary-light" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Instalar ClicStudio</h3>
+              <p className="text-sm text-gray-400 mt-1">Siga os passos abaixo para instalar o app no seu iPhone</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary-light">1</span>
+                </div>
+                <div>
+                  <p className="text-sm text-white font-medium">Toque no botão Compartilhar</p>
+                  <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                    O ícone <Share size={14} className="inline text-primary-light" /> na barra do Safari
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary-light">2</span>
+                </div>
+                <div>
+                  <p className="text-sm text-white font-medium">Toque em "Adicionar à Tela de Início"</p>
+                  <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                    O ícone <Plus size={14} className="inline text-primary-light" /> no menu que aparecer
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary-light">3</span>
+                </div>
+                <div>
+                  <p className="text-sm text-white font-medium">Confirme tocando em "Adicionar"</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Pronto! O ClicStudio aparecerá na sua tela inicial</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowIOSModal(false)}
+              className="w-full mt-6 py-2.5 rounded-xl bg-primary hover:bg-primary-light text-white text-sm font-semibold transition-colors cursor-pointer"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

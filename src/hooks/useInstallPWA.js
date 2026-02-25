@@ -1,12 +1,24 @@
 import { useState, useEffect } from 'react'
 
+function getIsIOS() {
+  if (typeof window === 'undefined') return false
+  const ua = window.navigator.userAgent
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+}
+
+function getIsStandalone() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+}
+
 export function useInstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(false)
+  const [isIOS] = useState(getIsIOS)
+  const [isStandalone] = useState(getIsStandalone)
 
   useEffect(() => {
-    // Detectar se já está instalado (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    if (getIsStandalone()) {
       setIsInstalled(true)
     }
 
@@ -41,9 +53,17 @@ export function useInstallPWA() {
     return false
   }
 
+  // canInstall: Android/Desktop com prompt nativo OU iOS que ainda não está em standalone
+  const canInstallNative = !!deferredPrompt && !isInstalled
+  const canInstallIOS = isIOS && !isStandalone && !isInstalled
+
   return {
-    canInstall: !!deferredPrompt && !isInstalled,
+    canInstall: canInstallNative || canInstallIOS,
+    canInstallNative,
+    canInstallIOS,
     isInstalled,
+    isStandalone,
+    isIOS,
     install,
   }
 }
