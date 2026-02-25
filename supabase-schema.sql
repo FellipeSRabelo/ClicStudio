@@ -186,3 +186,31 @@ CREATE POLICY "Permitir tudo para usuários autenticados" ON cronograma_posts
 
 -- Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE cronograma_posts;
+
+-- ============================================================
+-- TABELA: tipos_post (Tipos de Post para Agenda de Conteúdo)
+-- ============================================================
+CREATE TABLE tipos_post (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL,
+  ativo BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TRIGGER update_tipos_post_updated_at
+  BEFORE UPDATE ON tipos_post
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE tipos_post ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Permitir tudo para usuários autenticados" ON tipos_post
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Dados iniciais
+INSERT INTO tipos_post (nome) VALUES
+  ('Reel'),
+  ('Carrossel'),
+  ('Foto'),
+  ('Stories'),
+  ('Vídeo');

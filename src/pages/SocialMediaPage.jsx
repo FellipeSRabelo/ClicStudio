@@ -14,6 +14,8 @@ import {
   Calendar as CalendarIcon,
   Filter,
   Eye,
+  Settings,
+  X,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useSupabaseQuery, useRealtimeSubscription } from '../hooks/useSupabase'
@@ -25,7 +27,6 @@ import { cn } from '../lib/utils'
 
 /* ─── Constantes ─── */
 const REDES_SOCIAIS = ['Instagram', 'Facebook', 'TikTok', 'YouTube', 'LinkedIn', 'X (Twitter)']
-const TIPOS_POST = ['Reel', 'Carrossel', 'Foto']
 const STATUS_LIST = ['Planejado', 'Em Produção', 'Aprovado', 'Postado']
 const DIAS_SEMANA = [
   { key: 1, label: 'Seg' },
@@ -51,6 +52,7 @@ export function SocialMediaPage() {
   const [editingPost, setEditingPost] = useState(null)
   const [filterStatus, setFilterStatus] = useState('')
   const [filterCliente, setFilterCliente] = useState('')
+  const [showTiposModal, setShowTiposModal] = useState(false)
 
   // ─── Form state (Bulk) ───
   const [formClienteId, setFormClienteId] = useState('')
@@ -76,6 +78,15 @@ export function SocialMediaPage() {
   const { data: funcionarios } = useSupabaseQuery('funcionarios', {
     filters: [{ column: 'ativo', operator: 'eq', value: true }],
   })
+
+  // Tipos de post (do banco)
+  const { data: tiposPost, refetch: refetchTipos } = useSupabaseQuery('tipos_post', {
+    filters: [{ column: 'ativo', operator: 'eq', value: true }],
+    orderBy: 'nome',
+    ascending: true,
+  })
+
+  const tiposPostNomes = useMemo(() => tiposPost.map((t) => t.nome), [tiposPost])
 
   // Realtime
   const handleRealtime = useCallback(() => {
@@ -260,15 +271,29 @@ export function SocialMediaPage() {
             </Select>
 
             {/* Tipo de Post */}
-            <Select
-              label="Tipo de Post"
-              value={formTipoPost}
-              onChange={(e) => setFormTipoPost(e.target.value)}
-            >
-              {TIPOS_POST.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </Select>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-300">Tipo de Post</label>
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={formTipoPost}
+                  onChange={(e) => setFormTipoPost(e.target.value)}
+                  className="w-full rounded-lg border border-gray-700 bg-surface-light px-3 py-2 text-sm text-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                >
+                  {tiposPostNomes.length === 0 && <option value="">Nenhum tipo cadastrado</option>}
+                  {tiposPostNomes.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowTiposModal(true)}
+                  className="shrink-0 rounded-lg border border-gray-700 bg-surface-light p-2 text-gray-400 hover:text-white hover:border-gray-500 transition-colors cursor-pointer"
+                  title="Gerenciar tipos de post"
+                >
+                  <Settings size={16} />
+                </button>
+              </div>
+            </div>
 
             {/* Responsável */}
             <Select
@@ -418,11 +443,20 @@ export function SocialMediaPage() {
       {editingPost && (
         <PostEditModal
           post={editingPost}
+          tiposPost={tiposPostNomes}
           onClose={() => setEditingPost(null)}
           onSaved={() => {
             refetchPosts()
             setEditingPost(null)
           }}
+        />
+      )}
+
+      {/* ─── Modal Gerenciar Tipos de Post ─── */}
+      {showTiposModal && (
+        <TiposPostModal
+          onClose={() => setShowTiposModal(false)}
+          onUpdated={refetchTipos}
         />
       )}
     </div>
@@ -526,7 +560,7 @@ function PostCard({ post, onEdit, onDelete }) {
 /* ─────────────────────────────────────────
    POST EDIT MODAL
    ───────────────────────────────────────── */
-function PostEditModal({ post, onClose, onSaved }) {
+function PostEditModal({ post, tiposPost = [], onClose, onSaved }) {
   const [legenda, setLegenda] = useState(post.legenda || '')
   const [linkMidia, setLinkMidia] = useState(post.link_midia || '')
   const [status, setStatus] = useState(post.status || 'Planejado')
@@ -575,7 +609,7 @@ function PostEditModal({ post, onClose, onSaved }) {
           value={tipoPost}
           onChange={(e) => setTipoPost(e.target.value)}
         >
-          {TIPOS_POST.map((t) => (
+          {tiposPost.map((t) => (
             <option key={t} value={t}>{t}</option>
           ))}
         </Select>
@@ -649,6 +683,131 @@ function PostEditModal({ post, onClose, onSaved }) {
             {saving ? 'Salvando...' : 'Salvar Alterações'}
           </Button>
         </div>
+      </div>
+    </Modal>
+  )
+}
+
+/* ─────────────────────────────────────────
+   TIPOS POST MODAL (Gerenciar)
+   ───────────────────────────────────────── */
+function TiposPostModal({ onClose, onUpdated }) {
+  const [tipos, setTipos] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [novoNome, setNovoNome] = useState('')
+  const [adding, setAdding] = useState(false)
+
+  const fetchTipos = async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('tipos_post')
+      .select('*')
+      .order('nome', { ascending: true })
+    setTipos(data || [])
+    setLoading(false)
+  }
+
+  useState(() => { fetchTipos() })
+
+  const handleAdd = async () => {
+    const nome = novoNome.trim()
+    if (!nome) return
+    setAdding(true)
+    const { error } = await supabase.from('tipos_post').insert({ nome })
+    if (error) {
+      alert('Erro ao adicionar: ' + error.message)
+    } else {
+      setNovoNome('')
+      fetchTipos()
+      onUpdated()
+    }
+    setAdding(false)
+  }
+
+  const handleToggle = async (tipo) => {
+    const { error } = await supabase
+      .from('tipos_post')
+      .update({ ativo: !tipo.ativo })
+      .eq('id', tipo.id)
+    if (!error) {
+      fetchTipos()
+      onUpdated()
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm('Excluir este tipo de post permanentemente?')) return
+    const { error } = await supabase.from('tipos_post').delete().eq('id', id)
+    if (!error) {
+      fetchTipos()
+      onUpdated()
+    }
+  }
+
+  return (
+    <Modal isOpen onClose={onClose} title="Gerenciar Tipos de Post" size="sm">
+      <div className="space-y-4">
+        {/* Add new */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={novoNome}
+            onChange={(e) => setNovoNome(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+            placeholder="Novo tipo de post..."
+            className="flex-1 rounded-lg border border-gray-700 bg-surface-light px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+          />
+          <Button onClick={handleAdd} disabled={adding || !novoNome.trim()} size="sm">
+            <Plus size={16} />
+            Adicionar
+          </Button>
+        </div>
+
+        {/* List */}
+        {loading ? (
+          <div className="flex justify-center py-4">
+            <Loader2 size={20} className="animate-spin text-primary" />
+          </div>
+        ) : tipos.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-4">Nenhum tipo cadastrado</p>
+        ) : (
+          <div className="space-y-1 max-h-[300px] overflow-y-auto">
+            {tipos.map((tipo) => (
+              <div
+                key={tipo.id}
+                className={cn(
+                  'flex items-center justify-between rounded-lg px-3 py-2 transition-colors',
+                  tipo.ativo ? 'bg-surface-light' : 'bg-surface-light/50 opacity-60'
+                )}
+              >
+                <span className={cn('text-sm', tipo.ativo ? 'text-white' : 'text-gray-500 line-through')}>
+                  {tipo.nome}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleToggle(tipo)}
+                    className={cn(
+                      'rounded px-2 py-1 text-xs font-medium transition-colors cursor-pointer',
+                      tipo.ativo
+                        ? 'text-yellow-400 hover:bg-yellow-400/10'
+                        : 'text-green-400 hover:bg-green-400/10'
+                    )}
+                    title={tipo.ativo ? 'Desativar' : 'Ativar'}
+                  >
+                    {tipo.ativo ? 'Desativar' : 'Ativar'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(tipo.id)}
+                    className="rounded p-1 text-gray-500 hover:text-red-400 hover:bg-red-400/10 transition-colors cursor-pointer"
+                    title="Excluir"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </Modal>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ExternalLink, Loader2, Instagram } from 'lucide-react'
@@ -9,7 +9,6 @@ import { Select, Textarea } from '../ui/Input'
 import { Badge } from '../ui/Card'
 import { cn } from '../../lib/utils'
 
-const TIPOS_POST = ['Reel', 'Carrossel', 'Foto']
 const STATUS_LIST = ['Planejado', 'Em Produção', 'Aprovado', 'Postado']
 const STATUS_COLORS = {
   'Planejado': '#6366f1',
@@ -24,6 +23,18 @@ export function PostEditModalInline({ post, onClose, onSaved }) {
   const [status, setStatus] = useState(post.status || 'Planejado')
   const [tipoPost, setTipoPost] = useState(post.tipo_post || 'Reel')
   const [saving, setSaving] = useState(false)
+  const [tiposPost, setTiposPost] = useState([])
+
+  useEffect(() => {
+    supabase
+      .from('tipos_post')
+      .select('nome')
+      .eq('ativo', true)
+      .order('nome')
+      .then(({ data }) => {
+        if (data) setTiposPost(data.map((t) => t.nome))
+      })
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -75,7 +86,7 @@ export function PostEditModalInline({ post, onClose, onSaved }) {
           value={tipoPost}
           onChange={(e) => setTipoPost(e.target.value)}
         >
-          {TIPOS_POST.map((t) => (
+          {tiposPost.map((t) => (
             <option key={t} value={t}>{t}</option>
           ))}
         </Select>
