@@ -14,6 +14,7 @@ import {
   Share,
   Plus,
   X,
+  Share2,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { useInstallPWA } from '../../hooks/useInstallPWA'
@@ -22,6 +23,7 @@ import { cn } from '../../lib/utils'
 const navItems = [
   { to: '/', icon: Calendar, label: 'Dashboard' },
   { to: '/tarefas', icon: ClipboardList, label: 'Tarefas' },
+  { to: '/agenda-conteudo', icon: Share2, label: 'Agenda de Conteúdo' },
   { to: '/clientes', icon: Users, label: 'Clientes' },
   { to: '/funcionarios', icon: UserCircle, label: 'Funcionários' },
   { to: '/tipos-tarefa', icon: Tag, label: 'Tipos de Tarefa' },

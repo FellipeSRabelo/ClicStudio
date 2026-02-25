@@ -3,7 +3,7 @@ import { ptBR } from 'date-fns/locale'
 import {
   Plus, Edit2, Clock, MapPin, User, CheckCircle2,
   Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart,
-  ExternalLink, MessageCircle, Navigation,
+  ExternalLink, MessageCircle, Navigation, Instagram,
 } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
@@ -12,7 +12,7 @@ import { Badge } from '../ui/Card'
 const LUCIDE_ICONS = { Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart }
 const ICON_KEY_MAP = { camera: 'Camera', video: 'Video', image: 'Image', film: 'Film', briefcase: 'Briefcase', users: 'Users', package: 'Package', calendar: 'CalendarDays', star: 'Star', heart: 'Heart' }
 
-export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa = [], funcionarios = [], onEdit, onNew }) {
+export function DayDetailModal({ isOpen, onClose, day, tarefas = [], cronogramaPosts = [], tiposTarefa = [], funcionarios = [], onEdit, onNew, onEditPost }) {
   if (!day) return null
 
   const getTypeName = (id) => tiposTarefa.find((t) => t.id === id)?.nome || 'Sem tipo'
@@ -203,6 +203,67 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], tiposTarefa
           Nova tarefa neste dia
         </Button>
       </div>
+
+      {/* Cronograma Posts do dia */}
+      {cronogramaPosts.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-800">
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Instagram size={14} className="text-pink-400" />
+            Conteúdo Agendado ({cronogramaPosts.length})
+          </h4>
+          <div className="space-y-2">
+            {cronogramaPosts.map((post) => {
+              const statusColors = { 'Planejado': '#6366f1', 'Em Produção': '#f59e0b', 'Aprovado': '#22c55e', 'Postado': '#06b6d4' }
+              const sColor = statusColors[post.status] || '#6366f1'
+              return (
+                <div
+                  key={post.id}
+                  className="rounded-lg border border-dashed border-gray-700 p-3 hover:border-gray-600 transition-colors group cursor-pointer"
+                  style={{ borderLeftColor: sColor, borderLeftWidth: '3px', borderLeftStyle: 'solid' }}
+                  onClick={() => onEditPost?.(post)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{post.titulo || 'Post agendado'}</p>
+                      {post.clientes?.nome && (
+                        <p className="text-xs font-semibold text-primary-light mt-0.5">{post.clientes.nome}</p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-400">
+                        <Badge color={sColor}>{post.status}</Badge>
+                        {post.rede_social?.map((r) => (
+                          <Badge key={r} color="#e1306c">{r}</Badge>
+                        ))}
+                        <Badge color="#8b5cf6">{post.tipo_post}</Badge>
+                      </div>
+                      {post.legenda && (
+                        <p className="text-xs text-gray-500 mt-1.5 truncate italic">{post.legenda}</p>
+                      )}
+                      {post.link_midia && (
+                        <a
+                          href={post.link_midia}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-primary-light hover:text-primary mt-1 transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink size={12} />
+                          Ver mídia
+                        </a>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onEditPost?.(post) }}
+                      className="opacity-0 group-hover:opacity-100 rounded p-1 text-gray-500 hover:text-white hover:bg-surface-light transition-all cursor-pointer"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </Modal>
   )
 }

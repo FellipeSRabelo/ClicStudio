@@ -22,11 +22,18 @@ import {
   isSunday,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Sun, Clock, Camera, Video, Image, Film, Briefcase, Users, Package, Star, Heart } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Sun, Clock, Camera, Video, Image, Film, Briefcase, Users, Package, Star, Heart, Instagram } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 const LUCIDE_ICONS = { Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart }
 const ICON_KEY_MAP = { camera: 'Camera', video: 'Video', image: 'Image', film: 'Film', briefcase: 'Briefcase', users: 'Users', package: 'Package', calendar: 'CalendarDays', star: 'Star', heart: 'Heart' }
+
+const POST_STATUS_COLORS = {
+  'Planejado': '#6366f1',
+  'Em Produção': '#f59e0b',
+  'Aprovado': '#22c55e',
+  'Postado': '#06b6d4',
+}
 
 const VIEW_MODES = [
   { key: 'month', label: 'Mensal', icon: CalendarDays },
@@ -35,7 +42,7 @@ const VIEW_MODES = [
   { key: 'day', label: 'Diário', icon: Clock },
 ]
 
-export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], onDayClick, darkMode = false }) {
+export function Calendar({ tarefas = [], cronogramaPosts = [], tiposTarefa = [], funcionarios = [], onDayClick, onPostClick, darkMode = false }) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState('month')
 
@@ -126,6 +133,16 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
     })
     return map
   }, [tarefas])
+
+  const postsByDay = useMemo(() => {
+    const map = {}
+    cronogramaPosts.forEach((p) => {
+      const key = format(new Date(p.data_agendada), 'yyyy-MM-dd')
+      if (!map[key]) map[key] = []
+      map[key].push(p)
+    })
+    return map
+  }, [cronogramaPosts])
 
   const getTypeColor = useCallback(
     (tipoId) => {
@@ -240,15 +257,18 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
           const dayTarefas = (tarefasByDay[dateKey] || []).sort((a, b) =>
             (a.hora_inicio || '').localeCompare(b.hora_inicio || '')
           )
+          const dayPosts = (postsByDay[dateKey] || []).sort((a, b) =>
+            new Date(a.data_agendada) - new Date(b.data_agendada)
+          )
           const isCurrentMonth = viewMode === 'month' ? isSameMonth(day, currentDate) : true
           const today = isToday(day)
-          const hasTasks = dayTarefas.length > 0
+          const hasTasks = dayTarefas.length > 0 || dayPosts.length > 0
           const dayColors = [...new Set(dayTarefas.map((t) => getTypeColor(t.tipo_tarefa_id)))]
 
           return (
             <div
               key={dateKey}
-              onClick={() => onDayClick?.(day, dayTarefas)}
+              onClick={() => onDayClick?.(day, dayTarefas, dayPosts)}
               className={cn(
                 'calendar-day rounded-lg p-2 border border-transparent cursor-pointer transition-all overflow-y-auto',
                 cellMinHeight,
@@ -305,12 +325,40 @@ export function Calendar({ tarefas = [], tiposTarefa = [], funcionarios = [], on
                     )}
                   </div>
                 ))}
-                {dayTarefas.length > maxTasks && (
+                {dayTarefas.length > maxTasks && !dayPosts.length && (
                   <div className="text-xs text-gray-500 px-1">
                     +{dayTarefas.length - maxTasks} mais
                   </div>
                 )}
-                {isExpandedView && dayTarefas.length === 0 && (
+
+                {/* Cronograma Posts */}
+                {dayPosts.slice(0, Math.max(1, maxTasks - dayTarefas.length)).map((post) => (
+                  <div
+                    key={`post-${post.id}`}
+                    className={cn(
+                      'flex items-center gap-1 truncate rounded px-1.5 text-xs border',
+                      isExpandedView ? 'py-1.5' : 'py-0.5',
+                      post.status === 'Planejado' ? 'border-dashed' : 'border-solid',
+                    )}
+                    style={{
+                      backgroundColor: `${POST_STATUS_COLORS[post.status] || '#6366f1'}15`,
+                      color: POST_STATUS_COLORS[post.status] || '#6366f1',
+                      borderColor: `${POST_STATUS_COLORS[post.status] || '#6366f1'}40`,
+                    }}
+                    title={post.titulo || 'Post agendado'}
+                    onClick={(e) => { e.stopPropagation(); onPostClick?.(post) }}
+                  >
+                    <Instagram size={isExpandedView ? 13 : 11} className="shrink-0" />
+                    <span className="truncate">{post.titulo || post.rede_social?.[0] || 'Post'}</span>
+                  </div>
+                ))}
+                {(dayTarefas.length + dayPosts.length) > maxTasks && (
+                  <div className="text-xs text-gray-500 px-1">
+                    +{(dayTarefas.length + dayPosts.length) - maxTasks} mais
+                  </div>
+                )}
+
+                {isExpandedView && dayTarefas.length === 0 && dayPosts.length === 0 && (
                   <p className="text-xs text-gray-600 italic">Sem tarefas</p>
                 )}
               </div>

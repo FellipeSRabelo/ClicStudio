@@ -8,6 +8,7 @@ import { TarefasPage } from './pages/TarefasPage'
 import { ClientesPage } from './pages/ClientesPage'
 import { FuncionariosPage } from './pages/FuncionariosPage'
 import { TiposTarefaPage } from './pages/TiposTarefaPage'
+import { SocialMediaPage } from './pages/SocialMediaPage'
 import { LoadingSpinner } from './components/ui/Card'
 
 function ProtectedRoute({ children }) {
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="clientes" element={<ClientesPage />} />
           <Route path="funcionarios" element={<FuncionariosPage />} />
           <Route path="tipos-tarefa" element={<TiposTarefaPage />} />
+          <Route path="agenda-conteudo" element={<SocialMediaPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

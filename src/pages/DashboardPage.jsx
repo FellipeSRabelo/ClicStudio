@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button'
 import { FilterSidebar } from '../components/filters/FilterSidebar'
 import { TarefaModal } from '../components/tarefas/TarefaModal'
 import { DayDetailModal } from '../components/calendar/DayDetailModal'
+import { PostEditModalInline } from '../components/calendar/PostEditModalInline'
 
 export function DashboardPage() {
   const [selectedDay, setSelectedDay] = useState(null)
@@ -17,6 +18,8 @@ export function DashboardPage() {
   const [editingTarefa, setEditingTarefa] = useState(null)
   const [selectedDate, setSelectedDate] = useState(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [editingPost, setEditingPost] = useState(null)
+  const [dayPosts, setDayPosts] = useState([])
 
   // Filtros
   const [filtroFuncionarios, setFiltroFuncionarios] = useState([])
@@ -40,12 +43,21 @@ export function DashboardPage() {
     filters: [{ column: 'ativo', operator: 'eq', value: true }],
   })
 
+  // Cronograma posts
+  const { data: cronogramaPosts, refetch: refetchPosts } = useSupabaseQuery('cronograma_posts', {
+    select: '*, clientes(nome), funcionarios(nome)',
+    orderBy: 'data_agendada',
+    ascending: true,
+  })
+
   // Realtime
   const handleRealtime = useCallback(() => {
     refetchTarefas()
-  }, [refetchTarefas])
+    refetchPosts()
+  }, [refetchTarefas, refetchPosts])
 
   useRealtimeSubscription('tarefas', handleRealtime)
+  useRealtimeSubscription('cronograma_posts', handleRealtime)
 
   // Filtrar tarefas
   const filteredTarefas = tarefas.filter((t) => {
@@ -54,9 +66,14 @@ export function DashboardPage() {
     return true
   })
 
-  const handleDayClick = (day, tarefasDoDia) => {
+  const handleDayClick = (day, tarefasDoDia, postsDoDia = []) => {
     setSelectedDay(day)
     setDayTarefas(tarefasDoDia)
+    setDayPosts(postsDoDia)
+  }
+
+  const handlePostClick = (post) => {
+    setEditingPost(post)
   }
 
   const handleNewTarefa = (date) => {
@@ -141,9 +158,11 @@ export function DashboardPage() {
         <div className="flex-1 flex flex-col min-h-0">
           <Calendar
             tarefas={filteredTarefas}
+            cronogramaPosts={cronogramaPosts}
             tiposTarefa={tiposTarefa}
             funcionarios={funcionarios}
             onDayClick={handleDayClick}
+            onPostClick={handlePostClick}
           />
         </div>
       </div>
@@ -158,10 +177,12 @@ export function DashboardPage() {
           if (filtroTipos.length > 0 && !filtroTipos.includes(t.tipo_tarefa_id)) return false
           return true
         })}
+        cronogramaPosts={dayPosts}
         tiposTarefa={tiposTarefa}
         funcionarios={funcionarios}
         onEdit={handleEditTarefa}
         onNew={() => handleNewTarefa(selectedDay)}
+        onEditPost={(post) => { setSelectedDay(null); setEditingPost(post) }}
       />
 
       {/* Modal criar/editar tarefa */}
@@ -182,6 +203,18 @@ export function DashboardPage() {
           setEditingTarefa(null)
         }}
       />
+
+      {/* Modal editar post de cronograma */}
+      {editingPost && (
+        <PostEditModalInline
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSaved={() => {
+            refetchPosts()
+            setEditingPost(null)
+          }}
+        />
+      )}
     </div>
   )
 }

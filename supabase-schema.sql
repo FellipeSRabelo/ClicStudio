@@ -148,3 +148,41 @@ INSERT INTO tipos_tarefa (nome, cor, icone) VALUES
   ('Edição de Vídeo', '#9c27b0', 'film'),
   ('Entrega ao Cliente', '#00bcd4', 'package'),
   ('Reunião Interna', '#607d8b', 'users');
+
+-- ============================================================
+-- TABELA: cronograma_posts (Agenda de Conteúdo)
+-- ============================================================
+CREATE TABLE cronograma_posts (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  cliente_id UUID REFERENCES clientes(id) ON DELETE SET NULL,
+  tipo_post VARCHAR(50) NOT NULL DEFAULT 'Reel',  -- Reel, Carrossel, Foto
+  rede_social TEXT[] NOT NULL DEFAULT '{}',         -- ex: {Instagram, Facebook, TikTok}
+  legenda TEXT,
+  link_midia TEXT,
+  data_agendada TIMESTAMPTZ NOT NULL,
+  responsavel_id UUID REFERENCES funcionarios(id) ON DELETE SET NULL,
+  status VARCHAR(50) NOT NULL DEFAULT 'Planejado', -- Planejado, Em Produção, Aprovado, Postado
+  titulo VARCHAR(500),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX idx_cronograma_posts_data ON cronograma_posts(data_agendada);
+CREATE INDEX idx_cronograma_posts_cliente ON cronograma_posts(cliente_id);
+CREATE INDEX idx_cronograma_posts_responsavel ON cronograma_posts(responsavel_id);
+CREATE INDEX idx_cronograma_posts_status ON cronograma_posts(status);
+
+-- Trigger updated_at
+CREATE TRIGGER update_cronograma_posts_updated_at
+  BEFORE UPDATE ON cronograma_posts
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS
+ALTER TABLE cronograma_posts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Permitir tudo para usuários autenticados" ON cronograma_posts
+  FOR ALL USING (auth.role() = 'authenticated');
+
+-- Realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE cronograma_posts;
