@@ -63,9 +63,20 @@ export function getProgressBar(createdAt, deadline, realizado = false) {
 
   const percent = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100))
 
+  // Cor baseada na urgência real (horas restantes), não só na % decorrida
+  const hoursLeft = differenceInHours(end, now)
   let colorClass = 'bg-slate-500'
-  if (percent >= 80) colorClass = 'bg-red-600'
-  else if (percent >= 50) colorClass = 'bg-yellow-500'
+  if (isPast(end) || hoursLeft < 0) {
+    colorClass = 'bg-red-600'
+  } else if (hoursLeft < 24) {
+    colorClass = 'bg-red-600'
+  } else if (hoursLeft < 48) {
+    colorClass = 'bg-yellow-500'
+  } else if (percent >= 80) {
+    colorClass = 'bg-red-600'
+  } else if (percent >= 50) {
+    colorClass = 'bg-yellow-500'
+  }
 
   return { percent: Math.round(percent), colorClass }
 }
