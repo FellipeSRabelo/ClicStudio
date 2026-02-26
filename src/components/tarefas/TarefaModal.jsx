@@ -158,13 +158,11 @@ export function TarefaModal({
               <option key={f.id} value={f.id}>{f.nome}</option>
             ))}
           </Select>
-
           <Input
-            label="Data *"
-            type="date"
-            value={form.data_prazo}
-            onChange={(e) => handleChange('data_prazo', e.target.value)}
-            required
+            label="Local"
+            placeholder="Ex: Estúdio A"
+            value={form.local}
+            onChange={(e) => handleChange('local', e.target.value)}
           />
         </div>
 
@@ -181,11 +179,13 @@ export function TarefaModal({
             value={form.hora_fim}
             onChange={(e) => handleChange('hora_fim', e.target.value)}
           />
+
           <Input
-            label="Local"
-            placeholder="Ex: Estúdio A"
-            value={form.local}
-            onChange={(e) => handleChange('local', e.target.value)}
+            label="Data *"
+            type="date"
+            value={form.data_prazo}
+            onChange={(e) => handleChange('data_prazo', e.target.value)}
+            required
           />
         </div>
 
