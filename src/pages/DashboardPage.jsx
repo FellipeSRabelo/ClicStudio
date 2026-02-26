@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
-import { format } from 'date-fns'
+import { useState, useCallback, useMemo } from 'react'
+import { format, differenceInHours, isPast } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Plus, Calendar as CalendarIcon, Filter, Maximize, Minimize } from 'lucide-react'
+import { Plus, Calendar as CalendarIcon, Filter, Maximize, Minimize, ClipboardList, AlertTriangle, Clock } from 'lucide-react'
 import { Calendar } from '../components/calendar/Calendar'
 import { useSupabaseQuery, useRealtimeSubscription } from '../hooks/useSupabase'
 import { LoadingSpinner } from '../components/ui/Card'
@@ -98,6 +98,25 @@ export function DashboardPage() {
 
   const activeFiltersCount = filtroFuncionarios.length + filtroTipos.length
 
+  // Deadline summary stats
+  const deadlineStats = useMemo(() => {
+    const now = new Date()
+    const pendentes = tarefas.filter(t => !t.realizado)
+    const comDeadline = pendentes.filter(t => t.deadline_entrega)
+    const atrasadas = comDeadline.filter(t => isPast(new Date(t.deadline_entrega)))
+    const proximas48h = comDeadline.filter(t => {
+      const dl = new Date(t.deadline_entrega)
+      const hours = differenceInHours(dl, now)
+      return hours >= 0 && hours <= 48
+    })
+    return {
+      total: tarefas.length,
+      pendentes: pendentes.length,
+      proximas48h: proximas48h.length,
+      atrasadas: atrasadas.length,
+    }
+  }, [tarefas])
+
   if (loadingTarefas) return <LoadingSpinner />
 
   return (
@@ -137,6 +156,40 @@ export function DashboardPage() {
             <Plus size={16} />
             <span className="hidden sm:inline">Nova Tarefa</span>
           </Button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="rounded-xl border border-gray-800 bg-surface p-3 flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/15">
+            <ClipboardList size={20} className="text-primary-light" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Total de Tarefas</p>
+            <p className="text-xl font-bold text-white">{deadlineStats.total}</p>
+            <p className="text-xs text-gray-500">{deadlineStats.pendentes} pendentes</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-800 bg-surface p-3 flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-yellow-500/15">
+            <Clock size={20} className="text-yellow-400" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Próximos Deadlines</p>
+            <p className="text-xl font-bold text-yellow-400">{deadlineStats.proximas48h}</p>
+            <p className="text-xs text-gray-500">nas próximas 48h</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-800 bg-surface p-3 flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/15">
+            <AlertTriangle size={20} className="text-red-400" />
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wider">Entregas Atrasadas</p>
+            <p className={`text-xl font-bold ${deadlineStats.atrasadas > 0 ? 'text-red-400 animate-pulse' : 'text-green-400'}`}>{deadlineStats.atrasadas}</p>
+            <p className="text-xs text-gray-500">{deadlineStats.atrasadas === 0 ? 'tudo em dia ✅' : 'atenção!'}</p>
+          </div>
         </div>
       </div>
 

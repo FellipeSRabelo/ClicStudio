@@ -65,6 +65,7 @@ CREATE TABLE tarefas (
   local VARCHAR(255),
   link_galeria TEXT,
   realizado BOOLEAN DEFAULT false,
+  deadline_entrega TIMESTAMPTZ,
   observacoes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -78,6 +79,7 @@ CREATE INDEX idx_tarefas_funcionario ON tarefas(funcionario_id);
 CREATE INDEX idx_tarefas_tipo ON tarefas(tipo_tarefa_id);
 CREATE INDEX idx_tarefas_cliente ON tarefas(cliente_id);
 CREATE INDEX idx_tarefas_realizado ON tarefas(realizado);
+CREATE INDEX idx_tarefas_deadline ON tarefas(deadline_entrega);
 
 -- ============================================================
 -- Trigger para atualizar updated_at automaticamente

@@ -14,6 +14,7 @@ import {
   CalendarDays,
   CalendarRange,
   Clock,
+  AlertTriangle,
 } from 'lucide-react'
 import { useSupabaseQuery, useSupabaseMutation, useRealtimeSubscription } from '../hooks/useSupabase'
 import { Button } from '../components/ui/Button'
@@ -21,6 +22,7 @@ import { Input } from '../components/ui/Input'
 import { Table, LoadingSpinner, EmptyState, Badge } from '../components/ui/Card'
 import { TarefaModal } from '../components/tarefas/TarefaModal'
 import { supabase } from '../lib/supabase'
+import { getDeadlineStatus, getDeadlineText, getProgressBar, DEADLINE_BADGE } from '../lib/deadline'
 
 const QUICK_PERIODS = [
   { key: 'today', label: 'Hoje', icon: Clock },
@@ -343,9 +345,25 @@ export function TarefasPage() {
           }
         />
       ) : (
-        <Table headers={['Status', 'Descrição', 'Tipo', 'Data', 'Responsável', 'Local', 'Ações']}>
-          {filteredTarefas.map((tarefa) => (
-            <tr key={tarefa.id} className="hover:bg-surface-light/50 transition-colors">
+        <Table headers={['Status', 'Descrição', 'Tipo', 'Data', 'Deadline', 'Responsável', 'Ações']}>
+          {filteredTarefas.map((tarefa) => {
+            const dl = getDeadlineStatus(tarefa.deadline_entrega, tarefa.realizado)
+            const dlText = getDeadlineText(tarefa.deadline_entrega)
+            const bar = getProgressBar(tarefa.created_at, tarefa.deadline_entrega, tarefa.realizado)
+            const badgeStyle = dl.status === 'critical' ? DEADLINE_BADGE.critical : dl.status === 'urgent' ? DEADLINE_BADGE.urgent : null
+            return (
+            <tr key={tarefa.id} className="hover:bg-surface-light/50 transition-colors relative">
+              {/* Barra de progresso temporal */}
+              {tarefa.deadline_entrega && (
+                <td colSpan={7} className="p-0 h-0 border-0">
+                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-800/40 rounded-t overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${bar.colorClass}`}
+                      style={{ width: `${bar.percent}%` }}
+                    />
+                  </div>
+                </td>
+              )}
               <td className="px-4 py-3">
                 <button onClick={() => toggleRealizado(tarefa)} className="cursor-pointer">
                   {tarefa.realizado ? (
@@ -356,8 +374,16 @@ export function TarefasPage() {
                 </button>
               </td>
               <td className="px-4 py-3">
-                <div className={tarefa.realizado ? 'line-through text-gray-500' : 'text-white'}>
-                  {tarefa.descricao}
+                <div className="flex items-center gap-2">
+                  <div className={tarefa.realizado ? 'line-through text-gray-500' : 'text-white'}>
+                    {tarefa.descricao}
+                  </div>
+                  {badgeStyle && (
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border} ${badgeStyle.pulse ? 'animate-pulse' : ''}`}>
+                      <AlertTriangle size={11} />
+                      {dl.status === 'critical' ? (dl.hoursLeft < 0 ? 'Atrasado' : 'Crítico') : dl.label}
+                    </span>
+                  )}
                 </div>
                 {tarefa.clientes?.nome && (
                   <div className="text-xs text-gray-500">{tarefa.clientes.nome}</div>
@@ -374,11 +400,22 @@ export function TarefasPage() {
                   <div className="text-xs">{tarefa.hora_inicio.slice(0, 5)}</div>
                 )}
               </td>
-              <td className="px-4 py-3 text-sm text-gray-400">
-                {tarefa.funcionarios?.nome || '—'}
+              <td className="px-4 py-3 text-sm">
+                {tarefa.deadline_entrega ? (
+                  <div>
+                    <div className="text-gray-400">{format(new Date(tarefa.deadline_entrega), 'dd/MM HH:mm')}</div>
+                    {dlText && !tarefa.realizado && (
+                      <div className={`text-xs mt-0.5 ${dl.status === 'critical' ? 'text-red-400' : dl.status === 'urgent' ? 'text-yellow-400' : 'text-gray-500'}`}>
+                        {dlText}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-gray-600">—</span>
+                )}
               </td>
               <td className="px-4 py-3 text-sm text-gray-400">
-                {tarefa.local || '—'}
+                {tarefa.funcionarios?.nome || '—'}
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1">
@@ -391,7 +428,7 @@ export function TarefasPage() {
                 </div>
               </td>
             </tr>
-          ))}
+          )})}  
         </Table>
       )}
 

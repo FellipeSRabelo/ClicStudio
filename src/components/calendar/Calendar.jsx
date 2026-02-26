@@ -22,8 +22,9 @@ import {
   isSunday,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Sun, Clock, Camera, Video, Image, Film, Briefcase, Users, Package, Star, Heart, Instagram } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays, CalendarRange, Sun, Clock, Camera, Video, Image, Film, Briefcase, Users, Package, Star, Heart, Instagram, AlertTriangle } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { getDeadlineStatus, getProgressBar, DEADLINE_BADGE } from '../../lib/deadline'
 
 const LUCIDE_ICONS = { Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart }
 const ICON_KEY_MAP = { camera: 'Camera', video: 'Video', image: 'Image', film: 'Film', briefcase: 'Briefcase', users: 'Users', package: 'Package', calendar: 'CalendarDays', star: 'Star', heart: 'Heart' }
@@ -298,11 +299,15 @@ export function Calendar({ tarefas = [], cronogramaPosts = [], tiposTarefa = [],
 
               {/* Tasks list */}
               <div className={cn('space-y-0.5', isExpandedView && 'space-y-1')}>
-                {dayTarefas.slice(0, maxTasks).map((tarefa) => (
+                {dayTarefas.slice(0, maxTasks).map((tarefa) => {
+                  const dl = getDeadlineStatus(tarefa.deadline_entrega, tarefa.realizado)
+                  const bar = getProgressBar(tarefa.created_at, tarefa.deadline_entrega, tarefa.realizado)
+                  const badgeStyle = dl.status === 'critical' ? DEADLINE_BADGE.critical : dl.status === 'urgent' ? DEADLINE_BADGE.urgent : null
+                  return (
                   <div
                     key={tarefa.id}
                     className={cn(
-                      'flex items-center gap-1 truncate rounded px-1.5 text-xs',
+                      'relative flex items-center gap-1 truncate rounded px-1.5 text-xs overflow-hidden',
                       isExpandedView ? 'py-1.5' : 'py-0.5',
                       tarefa.realizado && 'line-through opacity-60'
                     )}
@@ -312,11 +317,22 @@ export function Calendar({ tarefas = [], cronogramaPosts = [], tiposTarefa = [],
                     }}
                     title={tarefa.descricao}
                   >
+                    {/* Barra de progresso deadline */}
+                    {tarefa.deadline_entrega && (
+                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-black/20">
+                        <div className={`h-full ${bar.colorClass}`} style={{ width: `${bar.percent}%` }} />
+                      </div>
+                    )}
                     {(() => { const Icon = getTypeIcon(tarefa.tipo_tarefa_id); return <Icon size={isExpandedView ? 14 : 12} className="shrink-0" /> })()}
                     {tarefa.hora_inicio && (
                       <span className="font-medium">{tarefa.hora_inicio?.slice(0, 5)} </span>
                     )}
                     <span className="truncate">{tarefa.descricao}</span>
+                    {badgeStyle && (
+                      <span className={`shrink-0 inline-flex items-center rounded-full px-1 py-0 text-[9px] font-bold ${badgeStyle.text} ${badgeStyle.pulse ? 'animate-pulse' : ''}`}>
+                        <AlertTriangle size={9} />
+                      </span>
+                    )}
                     {tarefa.clientes?.nome && (
                       <span className="text-gray-400 ml-1 shrink-0">• {tarefa.clientes.nome}</span>
                     )}
@@ -324,7 +340,7 @@ export function Calendar({ tarefas = [], cronogramaPosts = [], tiposTarefa = [],
                       <span className="text-gray-500 ml-1 shrink-0">• {tarefa.funcionarios.nome}</span>
                     )}
                   </div>
-                ))}
+                )})}
                 {dayTarefas.length > maxTasks && !dayPosts.length && (
                   <div className="text-xs text-gray-500 px-1">
                     +{dayTarefas.length - maxTasks} mais

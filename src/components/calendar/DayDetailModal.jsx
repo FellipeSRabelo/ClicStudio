@@ -3,11 +3,12 @@ import { ptBR } from 'date-fns/locale'
 import {
   Plus, Edit2, Clock, MapPin, User, CheckCircle2,
   Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart,
-  ExternalLink, MessageCircle, Navigation, Instagram,
+  ExternalLink, MessageCircle, Navigation, Instagram, AlertTriangle,
 } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Card'
+import { getDeadlineStatus, getDeadlineText, getProgressBar, DEADLINE_BADGE } from '../../lib/deadline'
 
 const LUCIDE_ICONS = { Camera, Video, Image, Film, Briefcase, Users, Package, CalendarDays, Star, Heart }
 const ICON_KEY_MAP = { camera: 'Camera', video: 'Video', image: 'Image', film: 'Film', briefcase: 'Briefcase', users: 'Users', package: 'Package', calendar: 'CalendarDays', star: 'Star', heart: 'Heart' }
@@ -75,9 +76,19 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], cronogramaP
               return (
                 <div
                   key={tarefa.id}
-                  className="rounded-lg border border-gray-800 p-3 hover:border-gray-700 transition-colors group"
+                  className="rounded-lg border border-gray-800 p-3 hover:border-gray-700 transition-colors group relative overflow-hidden"
                   style={{ borderLeftColor: getTypeColor(tarefa.tipo_tarefa_id), borderLeftWidth: '3px' }}
                 >
+                  {/* Barra de progresso deadline */}
+                  {(() => {
+                    if (!tarefa.deadline_entrega) return null
+                    const bar = getProgressBar(tarefa.created_at, tarefa.deadline_entrega, tarefa.realizado)
+                    return (
+                      <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-800/40">
+                        <div className={`h-full transition-all ${bar.colorClass}`} style={{ width: `${bar.percent}%` }} />
+                      </div>
+                    )
+                  })()}
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       {/* Título + ícone */}
@@ -119,6 +130,28 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], cronogramaP
                         <Badge color={getTypeColor(tarefa.tipo_tarefa_id)}>
                           {getTypeName(tarefa.tipo_tarefa_id)}
                         </Badge>
+                        {/* Deadline badge */}
+                        {(() => {
+                          if (!tarefa.deadline_entrega) return null
+                          const dl = getDeadlineStatus(tarefa.deadline_entrega, tarefa.realizado)
+                          const dlText = getDeadlineText(tarefa.deadline_entrega)
+                          const badgeStyle = dl.status === 'critical' ? DEADLINE_BADGE.critical : dl.status === 'urgent' ? DEADLINE_BADGE.urgent : null
+                          return (
+                            <>
+                              {badgeStyle && (
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold border ${badgeStyle.bg} ${badgeStyle.text} ${badgeStyle.border} ${badgeStyle.pulse ? 'animate-pulse' : ''}`}>
+                                  <AlertTriangle size={11} />
+                                  {dl.status === 'critical' ? (dl.hoursLeft < 0 ? 'Atrasado' : 'Crítico') : dl.label}
+                                </span>
+                              )}
+                              {dlText && !tarefa.realizado && (
+                                <span className={`text-xs ${dl.status === 'critical' ? 'text-red-400' : dl.status === 'urgent' ? 'text-yellow-400' : 'text-gray-500'}`}>
+                                  Deadline {dlText}
+                                </span>
+                              )}
+                            </>
+                          )
+                        })()}
                         {tarefa.hora_inicio && (
                           <span className="flex items-center gap-1">
                             <Clock size={12} />

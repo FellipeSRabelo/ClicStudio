@@ -29,6 +29,7 @@ export function TarefaModal({
     hora_fim: '',
     local: '',
     link_galeria: '',
+    deadline_entrega: '',
     realizado: false,
     observacoes: '',
   })
@@ -45,6 +46,7 @@ export function TarefaModal({
         hora_fim: tarefa.hora_fim?.slice(0, 5) || '',
         local: tarefa.local || '',
         link_galeria: tarefa.link_galeria || '',
+        deadline_entrega: tarefa.deadline_entrega ? tarefa.deadline_entrega.slice(0, 16) : '',
         realizado: tarefa.realizado || false,
         observacoes: tarefa.observacoes || '',
       })
@@ -59,6 +61,7 @@ export function TarefaModal({
         hora_fim: '',
         local: '',
         link_galeria: '',
+        deadline_entrega: '',
         realizado: false,
         observacoes: '',
       })
@@ -80,6 +83,7 @@ export function TarefaModal({
       hora_inicio: form.hora_inicio || null,
       hora_fim: form.hora_fim || null,
       link_galeria: form.link_galeria || null,
+      deadline_entrega: form.deadline_entrega ? new Date(form.deadline_entrega).toISOString() : null,
     }
 
     if (tarefa) {
@@ -181,12 +185,20 @@ export function TarefaModal({
           />
         </div>
 
-        <Input
-          label="Link da Galeria / Entrega"
-          placeholder="https://drive.google.com/..."
-          value={form.link_galeria}
-          onChange={(e) => handleChange('link_galeria', e.target.value)}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Link da Galeria / Entrega"
+            placeholder="https://drive.google.com/..."
+            value={form.link_galeria}
+            onChange={(e) => handleChange('link_galeria', e.target.value)}
+          />
+          <Input
+            label="Deadline de Entrega"
+            type="datetime-local"
+            value={form.deadline_entrega}
+            onChange={(e) => handleChange('deadline_entrega', e.target.value)}
+          />
+        </div>
 
         <Textarea
           label="Observações"
