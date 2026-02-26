@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { format, isToday, isTomorrow, startOfWeek, endOfWeek, isWithinInterval, addDays, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -15,6 +15,7 @@ import {
   CalendarRange,
   Clock,
   AlertTriangle,
+  ChevronDown,
 } from 'lucide-react'
 import { useSupabaseQuery, useSupabaseMutation, useRealtimeSubscription } from '../hooks/useSupabase'
 import { Button } from '../components/ui/Button'
@@ -92,6 +93,20 @@ export function TarefasPage() {
     setQuickPeriod(null)
   }
 
+  const [showClienteDropdown, setShowClienteDropdown] = useState(false)
+  const clienteDropdownRef = useRef(null)
+
+  // Fecha dropdown ao clicar fora
+  useEffect(() => {
+    const handler = (e) => {
+      if (clienteDropdownRef.current && !clienteDropdownRef.current.contains(e.target)) {
+        setShowClienteDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
   const toggleCliente = (id) => {
     setFiltroClientes((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
@@ -115,7 +130,7 @@ export function TarefasPage() {
 
   // Filtros combinados
   const filteredTarefas = useMemo(() => {
-    return tarefas.filter((t) => {
+    const filtered = tarefas.filter((t) => {
       // Busca texto
       if (search) {
         const s = search.toLowerCase()
@@ -150,6 +165,18 @@ export function TarefasPage() {
       if (filtroTipos.length > 0 && !filtroTipos.includes(t.tipo_tarefa_id)) return false
 
       return true
+    })
+
+    // Ordenar: tarefas com deadline mais próximo primeiro, sem deadline por último
+    return filtered.sort((a, b) => {
+      const aHasDeadline = !!a.deadline_entrega
+      const bHasDeadline = !!b.deadline_entrega
+      if (aHasDeadline && bHasDeadline) {
+        return new Date(a.deadline_entrega) - new Date(b.deadline_entrega)
+      }
+      if (aHasDeadline) return -1
+      if (bHasDeadline) return 1
+      return (a.data_prazo || '').localeCompare(b.data_prazo || '')
     })
   }, [tarefas, search, quickPeriod, dateFrom, dateTo, filtroClientes, filtroTipos])
 
@@ -268,30 +295,52 @@ export function TarefasPage() {
 
           {/* Filtro por Cliente e Tipo lado a lado */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Cliente */}
-            <div>
+            {/* Cliente - Dropdown multiselect */}
+            <div ref={clienteDropdownRef} className="relative">
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Cliente
               </label>
-              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                {clientes.map((c) => (
-                  <label
-                    key={c.id}
-                    className="flex items-center gap-2 cursor-pointer text-xs text-gray-300 hover:text-white transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filtroClientes.includes(c.id)}
-                      onChange={() => toggleCliente(c.id)}
-                      className="w-3.5 h-3.5 rounded border-gray-600 cursor-pointer accent-primary"
-                    />
-                    <span className="truncate">{c.nome}</span>
-                  </label>
-                ))}
-                {clientes.length === 0 && (
-                  <p className="text-xs text-gray-600">Nenhum cliente</p>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowClienteDropdown(!showClienteDropdown)}
+                className="w-full flex items-center justify-between rounded-lg border border-gray-700 bg-surface-light px-3 py-2 text-xs text-left cursor-pointer hover:border-gray-600 transition-colors"
+              >
+                <span className={filtroClientes.length > 0 ? 'text-white' : 'text-gray-500'}>
+                  {filtroClientes.length > 0
+                    ? `${filtroClientes.length} cliente${filtroClientes.length > 1 ? 's' : ''} selecionado${filtroClientes.length > 1 ? 's' : ''}`
+                    : 'Todos os clientes'}
+                </span>
+                <ChevronDown size={14} className={`text-gray-500 transition-transform ${showClienteDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              {showClienteDropdown && (
+                <div className="absolute z-50 mt-1 w-full rounded-lg border border-gray-700 bg-surface-light shadow-xl max-h-48 overflow-y-auto">
+                  {filtroClientes.length > 0 && (
+                    <button
+                      onClick={() => setFiltroClientes([])}
+                      className="w-full text-left px-3 py-1.5 text-xs text-primary-light hover:bg-surface-lighter transition-colors cursor-pointer border-b border-gray-700"
+                    >
+                      Limpar seleção
+                    </button>
+                  )}
+                  {clientes.map((c) => (
+                    <label
+                      key={c.id}
+                      className="flex items-center gap-2 px-3 py-2 text-xs text-gray-300 hover:bg-surface-lighter hover:text-white cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filtroClientes.includes(c.id)}
+                        onChange={() => toggleCliente(c.id)}
+                        className="w-3.5 h-3.5 rounded border-gray-600 cursor-pointer accent-primary"
+                      />
+                      <span className="truncate">{c.nome}</span>
+                    </label>
+                  ))}
+                  {clientes.length === 0 && (
+                    <p className="text-xs text-gray-600 px-3 py-2">Nenhum cliente</p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Tipo de Tarefa */}
@@ -352,17 +401,22 @@ export function TarefasPage() {
             const bar = getProgressBar(tarefa.created_at, tarefa.deadline_entrega, tarefa.realizado)
             const badgeStyle = dl.status === 'critical' ? DEADLINE_BADGE.critical : dl.status === 'urgent' ? DEADLINE_BADGE.urgent : null
             return (
-            <tr key={tarefa.id} className="hover:bg-surface-light/50 transition-colors relative">
-              <td className="px-4 py-3 relative">
-                {/* Barra de progresso temporal - absolute no topo da row */}
-                {tarefa.deadline_entrega && (
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-800/40 overflow-hidden" style={{ width: '700%' }}>
-                    <div
-                      className={`h-full transition-all duration-500 ${bar.colorClass}`}
-                      style={{ width: `${bar.percent}%` }}
-                    />
-                  </div>
-                )}
+            <React.Fragment key={tarefa.id}>
+              {/* Barra de progresso temporal - row separada */}
+              {tarefa.deadline_entrega && (
+                <tr className="h-0">
+                  <td colSpan={7} className="p-0 border-0">
+                    <div className="h-[3px] bg-gray-800/40 w-full">
+                      <div
+                        className={`h-full transition-all duration-500 ${bar.colorClass}`}
+                        style={{ width: `${bar.percent}%` }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )}
+              <tr className="hover:bg-surface-light/50 transition-colors">
+              <td className="px-4 py-3">
                 <button onClick={() => toggleRealizado(tarefa)} className="cursor-pointer">
                   {tarefa.realizado ? (
                     <CheckCircle2 size={18} className="text-green-500" />
@@ -426,6 +480,7 @@ export function TarefasPage() {
                 </div>
               </td>
             </tr>
+            </React.Fragment>
           )})}  
         </Table>
       )}
