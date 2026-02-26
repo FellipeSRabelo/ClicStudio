@@ -167,6 +167,13 @@ export function TarefaModal({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <Input
+            label="Data *"
+            type="date"
+            value={form.data_prazo}
+            onChange={(e) => handleChange('data_prazo', e.target.value)}
+            required
+          />          
           <Input
             label="Hora Início"
             type="time"
@@ -180,13 +187,7 @@ export function TarefaModal({
             onChange={(e) => handleChange('hora_fim', e.target.value)}
           />
 
-          <Input
-            label="Data *"
-            type="date"
-            value={form.data_prazo}
-            onChange={(e) => handleChange('data_prazo', e.target.value)}
-            required
-          />
+
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
