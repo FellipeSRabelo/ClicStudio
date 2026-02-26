@@ -165,6 +165,7 @@ export function TarefaModal({
             onChange={(e) => handleChange('local', e.target.value)}
           />
         </div>
+        <div className="border-t border-gray-800 mt-8 mb-6">  </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Input
@@ -212,6 +213,7 @@ export function TarefaModal({
             <option value={336}>14 dias (336h)</option>
           </Select>
         </div>
+        <div className="border-t border-gray-800 mt-8 mb-6">  </div>
 
         <Input
           label="Link da Galeria / Entrega"
