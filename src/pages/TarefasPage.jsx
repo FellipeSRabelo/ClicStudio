@@ -398,7 +398,7 @@ export function TarefasPage() {
           {filteredTarefas.map((tarefa) => {
             const dl = getDeadlineStatus(tarefa.deadline_entrega, tarefa.realizado)
             const dlText = getDeadlineText(tarefa.deadline_entrega)
-            const bar = getProgressBar(tarefa.created_at, tarefa.deadline_entrega, tarefa.realizado)
+            const bar = getProgressBar(tarefa.deadline_entrega, tarefa.realizado, tarefa.janela_alerta_horas)
             const badgeStyle = dl.status === 'critical' ? DEADLINE_BADGE.critical : dl.status === 'urgent' ? DEADLINE_BADGE.urgent : null
             return (
             <React.Fragment key={tarefa.id}>
@@ -408,8 +408,8 @@ export function TarefasPage() {
                   <td colSpan={7} className="p-0 border-0">
                     <div className="h-[3px] bg-gray-800/40 w-full">
                       <div
-                        className={`h-full transition-all duration-500 ${bar.colorClass}`}
-                        style={{ width: `${bar.percent}%` }}
+                        className="h-full transition-all duration-500"
+                        style={{ width: `${bar.percent}%`, backgroundColor: bar.color }}
                       />
                     </div>
                   </td>

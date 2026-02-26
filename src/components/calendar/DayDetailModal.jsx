@@ -82,10 +82,10 @@ export function DayDetailModal({ isOpen, onClose, day, tarefas = [], cronogramaP
                   {/* Barra de progresso deadline */}
                   {(() => {
                     if (!tarefa.deadline_entrega) return null
-                    const bar = getProgressBar(tarefa.created_at, tarefa.deadline_entrega, tarefa.realizado)
+                    const bar = getProgressBar(tarefa.deadline_entrega, tarefa.realizado, tarefa.janela_alerta_horas)
                     return (
                       <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-800/40">
-                        <div className={`h-full transition-all ${bar.colorClass}`} style={{ width: `${bar.percent}%` }} />
+                        <div className="h-full transition-all" style={{ width: `${bar.percent}%`, backgroundColor: bar.color }} />
                       </div>
                     )
                   })()}

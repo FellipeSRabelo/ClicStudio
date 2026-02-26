@@ -66,6 +66,7 @@ CREATE TABLE tarefas (
   link_galeria TEXT,
   realizado BOOLEAN DEFAULT false,
   deadline_entrega TIMESTAMPTZ,
+  janela_alerta_horas INT DEFAULT 120,
   observacoes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

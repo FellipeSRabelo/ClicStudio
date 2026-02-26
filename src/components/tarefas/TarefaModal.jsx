@@ -30,6 +30,7 @@ export function TarefaModal({
     local: '',
     link_galeria: '',
     deadline_entrega: '',
+    janela_alerta_horas: 120,
     realizado: false,
     observacoes: '',
   })
@@ -47,6 +48,7 @@ export function TarefaModal({
         local: tarefa.local || '',
         link_galeria: tarefa.link_galeria || '',
         deadline_entrega: tarefa.deadline_entrega ? tarefa.deadline_entrega.slice(0, 16) : '',
+        janela_alerta_horas: tarefa.janela_alerta_horas ?? 120,
         realizado: tarefa.realizado || false,
         observacoes: tarefa.observacoes || '',
       })
@@ -62,6 +64,7 @@ export function TarefaModal({
         local: '',
         link_galeria: '',
         deadline_entrega: '',
+        janela_alerta_horas: 120,
         realizado: false,
         observacoes: '',
       })
@@ -84,6 +87,7 @@ export function TarefaModal({
       hora_fim: form.hora_fim || null,
       link_galeria: form.link_galeria || null,
       deadline_entrega: form.deadline_entrega ? new Date(form.deadline_entrega).toISOString() : null,
+      janela_alerta_horas: parseInt(form.janela_alerta_horas) || 120,
     }
 
     if (tarefa) {
@@ -192,12 +196,29 @@ export function TarefaModal({
             value={form.link_galeria}
             onChange={(e) => handleChange('link_galeria', e.target.value)}
           />
-          <Input
-            label="Deadline de Entrega"
-            type="datetime-local"
-            value={form.deadline_entrega}
-            onChange={(e) => handleChange('deadline_entrega', e.target.value)}
-          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="sm:col-span-2">
+            <Input
+              label="Deadline de Entrega"
+              type="datetime-local"
+              value={form.deadline_entrega}
+              onChange={(e) => handleChange('deadline_entrega', e.target.value)}
+            />
+          </div>
+          <Select
+            label="Início do Alerta"
+            value={form.janela_alerta_horas}
+            onChange={(e) => handleChange('janela_alerta_horas', e.target.value)}
+          >
+            <option value={48}>2 dias (48h)</option>
+            <option value={72}>3 dias (72h)</option>
+            <option value={120}>5 dias (120h)</option>
+            <option value={168}>7 dias (168h)</option>
+            <option value={240}>10 dias (240h)</option>
+            <option value={336}>14 dias (336h)</option>
+          </Select>
         </div>
 
         <Textarea

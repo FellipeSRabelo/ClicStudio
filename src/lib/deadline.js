@@ -1,4 +1,4 @@
-import { differenceInHours, differenceInMilliseconds, formatDistanceToNow, isPast } from 'date-fns'
+import { differenceInHours, formatDistanceToNow, isPast } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 /**
@@ -42,43 +42,58 @@ export function getDeadlineText(deadline) {
 }
 
 /**
- * Calcula a porcentagem da barra de progresso temporal
- * @param {string|Date} createdAt - data de criação da tarefa
+ * Gradiente de 9 tons baseado na % de countdown
+ */
+const PROGRESS_COLORS = [
+  { max: 11, color: '#22c55e' },  // Verde Seguro
+  { max: 22, color: '#4ade80' },  // Verde Estável
+  { max: 33, color: '#84cc16' },  // Verde Lima
+  { max: 44, color: '#eab308' },  // Amarelo Alerta
+  { max: 55, color: '#facc15' },  // Amarelo Urgente
+  { max: 66, color: '#f97316' },  // Laranja Médio
+  { max: 77, color: '#fb923c' },  // Laranja Forte
+  { max: 88, color: '#ef4444' },  // Vermelho Crítico
+  { max: 101, color: '#b91c1c' }, // Vermelho Vencido
+]
+
+function getProgressColor(percent) {
+  for (const entry of PROGRESS_COLORS) {
+    if (percent < entry.max) return entry.color
+  }
+  return '#b91c1c'
+}
+
+/**
+ * Calcula a barra de progresso temporal baseada em Countdown (Janela de Alerta)
  * @param {string|Date} deadline - data do deadline
  * @param {boolean} realizado - se a tarefa foi concluída
- * @returns {{ percent: number, colorClass: string }}
+ * @param {number} janelaHoras - janela de alerta em horas (default 120 = 5 dias)
+ * @returns {{ percent: number, color: string }}
  */
-export function getProgressBar(createdAt, deadline, realizado = false) {
-  if (!deadline || !createdAt) return { percent: 0, colorClass: 'bg-slate-500/50' }
-  if (realizado) return { percent: 100, colorClass: 'bg-green-500' }
+export function getProgressBar(deadline, realizado = false, janelaHoras = 120) {
+  if (!deadline) return { percent: 0, color: '#334155' } // slate-700
+  if (realizado) return { percent: 100, color: '#22c55e' } // green-500
 
   const now = new Date()
-  const start = new Date(createdAt)
   const end = new Date(deadline)
-
-  const totalMs = differenceInMilliseconds(end, start)
-  const elapsedMs = differenceInMilliseconds(now, start)
-
-  if (totalMs <= 0) return { percent: 100, colorClass: 'bg-red-600' }
-
-  const percent = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100))
-
-  // Cor baseada na urgência real (horas restantes), não só na % decorrida
   const hoursLeft = differenceInHours(end, now)
-  let colorClass = 'bg-slate-500'
+  const janela = janelaHoras || 120
+
+  // Atrasado
   if (isPast(end) || hoursLeft < 0) {
-    colorClass = 'bg-red-600'
-  } else if (hoursLeft < 24) {
-    colorClass = 'bg-red-600'
-  } else if (hoursLeft < 48) {
-    colorClass = 'bg-yellow-500'
-  } else if (percent >= 80) {
-    colorClass = 'bg-red-600'
-  } else if (percent >= 50) {
-    colorClass = 'bg-yellow-500'
+    return { percent: 100, color: '#b91c1c' }
   }
 
-  return { percent: Math.round(percent), colorClass }
+  // Fora da janela de alerta
+  if (hoursLeft > janela) {
+    return { percent: 0, color: '#334155' }
+  }
+
+  // Dentro da janela: countdown
+  const percent = Math.min(100, Math.max(0, ((janela - hoursLeft) / janela) * 100))
+  const color = getProgressColor(percent)
+
+  return { percent: Math.round(percent), color }
 }
 
 /**

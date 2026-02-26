@@ -301,7 +301,7 @@ export function Calendar({ tarefas = [], cronogramaPosts = [], tiposTarefa = [],
               <div className={cn('space-y-0.5', isExpandedView && 'space-y-1')}>
                 {dayTarefas.slice(0, maxTasks).map((tarefa) => {
                   const dl = getDeadlineStatus(tarefa.deadline_entrega, tarefa.realizado)
-                  const bar = getProgressBar(tarefa.created_at, tarefa.deadline_entrega, tarefa.realizado)
+                  const bar = getProgressBar(tarefa.deadline_entrega, tarefa.realizado, tarefa.janela_alerta_horas)
                   const badgeStyle = dl.status === 'critical' ? DEADLINE_BADGE.critical : dl.status === 'urgent' ? DEADLINE_BADGE.urgent : null
                   return (
                   <div
@@ -320,7 +320,7 @@ export function Calendar({ tarefas = [], cronogramaPosts = [], tiposTarefa = [],
                     {/* Barra de progresso deadline */}
                     {tarefa.deadline_entrega && (
                       <div className="absolute top-0 left-0 right-0 h-[2px] bg-black/20">
-                        <div className={`h-full ${bar.colorClass}`} style={{ width: `${bar.percent}%` }} />
+                        <div style={{ width: `${bar.percent}%`, backgroundColor: bar.color }} className="h-full" />
                       </div>
                     )}
                     {(() => { const Icon = getTypeIcon(tarefa.tipo_tarefa_id); return <Icon size={isExpandedView ? 14 : 12} className="shrink-0" /> })()}
