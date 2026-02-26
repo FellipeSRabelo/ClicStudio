@@ -47,7 +47,7 @@ export function TarefaModal({
         hora_fim: tarefa.hora_fim?.slice(0, 5) || '',
         local: tarefa.local || '',
         link_galeria: tarefa.link_galeria || '',
-        deadline_entrega: tarefa.deadline_entrega ? tarefa.deadline_entrega.slice(0, 16) : '',
+        deadline_entrega: tarefa.deadline_entrega ? format(new Date(tarefa.deadline_entrega), "yyyy-MM-dd'T'HH:mm") : '',
         janela_alerta_horas: tarefa.janela_alerta_horas ?? 120,
         realizado: tarefa.realizado || false,
         observacoes: tarefa.observacoes || '',
@@ -189,15 +189,6 @@ export function TarefaModal({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Link da Galeria / Entrega"
-            placeholder="https://drive.google.com/..."
-            value={form.link_galeria}
-            onChange={(e) => handleChange('link_galeria', e.target.value)}
-          />
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
             <Input
@@ -220,6 +211,13 @@ export function TarefaModal({
             <option value={336}>14 dias (336h)</option>
           </Select>
         </div>
+
+        <Input
+          label="Link da Galeria / Entrega"
+          placeholder="https://drive.google.com/..."
+          value={form.link_galeria}
+          onChange={(e) => handleChange('link_galeria', e.target.value)}
+        />
 
         <Textarea
           label="Observações"
