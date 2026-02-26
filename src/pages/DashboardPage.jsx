@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { format, differenceInHours, isPast } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Plus, Calendar as CalendarIcon, Filter, Maximize, Minimize, ClipboardList, AlertTriangle, Clock } from 'lucide-react'
+import { Plus, Calendar as CalendarIcon, Filter, Maximize, Minimize, ClipboardList, AlertTriangle, Clock, ChevronUp, ChevronDown } from 'lucide-react'
 import { Calendar } from '../components/calendar/Calendar'
 import { useSupabaseQuery, useRealtimeSubscription } from '../hooks/useSupabase'
 import { LoadingSpinner } from '../components/ui/Card'
@@ -20,6 +20,8 @@ export function DashboardPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [editingPost, setEditingPost] = useState(null)
   const [dayPosts, setDayPosts] = useState([])
+  const [showSummary, setShowSummary] = useState(true)
+  const [hoveredCard, setHoveredCard] = useState(null)
 
   // Filtros
   const [filtroFuncionarios, setFiltroFuncionarios] = useState([])
@@ -113,7 +115,9 @@ export function DashboardPage() {
       total: tarefas.length,
       pendentes: pendentes.length,
       proximas48h: proximas48h.length,
+      proximas48hTarefas: proximas48h,
       atrasadas: atrasadas.length,
+      atrasadasTarefas: atrasadas,
     }
   }, [tarefas])
 
@@ -160,37 +164,81 @@ export function DashboardPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="rounded-xl border border-gray-800 bg-surface p-3 flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/15">
-            <ClipboardList size={20} className="text-primary-light" />
+      <div className="mb-3">
+        <button
+          onClick={() => setShowSummary(!showSummary)}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors cursor-pointer mb-2"
+        >
+          {showSummary ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {showSummary ? 'Ocultar resumo' : 'Ver resumo'}
+        </button>
+        {showSummary && (
+          <div className="grid grid-cols-3 gap-3">
+            {/* Total */}
+            <div className="rounded-lg border border-gray-800 bg-surface px-3 py-2 flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/15 shrink-0">
+                <ClipboardList size={16} className="text-primary-light" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-bold text-white leading-tight">{deadlineStats.total} <span className="text-xs font-normal text-gray-500">tarefas · {deadlineStats.pendentes} pendentes</span></p>
+              </div>
+            </div>
+            {/* Próximos 48h */}
+            <div
+              className="rounded-lg border border-gray-800 bg-surface px-3 py-2 flex items-center gap-3 relative cursor-pointer"
+              onMouseEnter={() => setHoveredCard('proximas')}
+              onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-yellow-500/15 shrink-0">
+                <Clock size={16} className="text-yellow-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-bold text-yellow-400 leading-tight">{deadlineStats.proximas48h} <span className="text-xs font-normal text-gray-500">deadlines nas próximas 48h</span></p>
+              </div>
+              {/* Tooltip */}
+              {hoveredCard === 'proximas' && deadlineStats.proximas48hTarefas.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 z-50 w-72 rounded-lg border border-gray-700 bg-surface-light shadow-xl p-2 space-y-1">
+                  {deadlineStats.proximas48hTarefas.slice(0, 5).map(t => (
+                    <div key={t.id} className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-xs bg-yellow-500/10">
+                      <span className="text-white truncate">{t.descricao}</span>
+                      <span className="text-yellow-400 shrink-0">{format(new Date(t.deadline_entrega), 'dd/MM HH:mm')}</span>
+                    </div>
+                  ))}
+                  {deadlineStats.proximas48hTarefas.length > 5 && (
+                    <p className="text-xs text-gray-500 px-2">+{deadlineStats.proximas48hTarefas.length - 5} mais</p>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Atrasadas */}
+            <div
+              className="rounded-lg border border-gray-800 bg-surface px-3 py-2 flex items-center gap-3 relative cursor-pointer"
+              onMouseEnter={() => setHoveredCard('atrasadas')}
+              onMouseLeave={() => setHoveredCard(null)}
+            >
+              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-red-500/15 shrink-0">
+                <AlertTriangle size={16} className="text-red-400" />
+              </div>
+              <div className="min-w-0">
+                <p className={`text-lg font-bold leading-tight ${deadlineStats.atrasadas > 0 ? 'text-red-400' : 'text-green-400'}`}>{deadlineStats.atrasadas} <span className="text-xs font-normal text-gray-500">{deadlineStats.atrasadas === 0 ? 'tudo em dia ✅' : 'entregas atrasadas'}</span></p>
+              </div>
+              {/* Tooltip */}
+              {hoveredCard === 'atrasadas' && deadlineStats.atrasadasTarefas.length > 0 && (
+                <div className="absolute top-full left-0 mt-1 z-50 w-72 rounded-lg border border-gray-700 bg-surface-light shadow-xl p-2 space-y-1">
+                  {deadlineStats.atrasadasTarefas.slice(0, 5).map(t => (
+                    <div key={t.id} className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-xs bg-red-500/10">
+                      <span className="text-white truncate">{t.descricao}</span>
+                      <span className="text-red-400 shrink-0">{format(new Date(t.deadline_entrega), 'dd/MM HH:mm')}</span>
+                    </div>
+                  ))}
+                  {deadlineStats.atrasadasTarefas.length > 5 && (
+                    <p className="text-xs text-gray-500 px-2">+{deadlineStats.atrasadasTarefas.length - 5} mais</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Total de Tarefas</p>
-            <p className="text-xl font-bold text-white">{deadlineStats.total}</p>
-            <p className="text-xs text-gray-500">{deadlineStats.pendentes} pendentes</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-gray-800 bg-surface p-3 flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-yellow-500/15">
-            <Clock size={20} className="text-yellow-400" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Próximos Deadlines</p>
-            <p className="text-xl font-bold text-yellow-400">{deadlineStats.proximas48h}</p>
-            <p className="text-xs text-gray-500">nas próximas 48h</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-gray-800 bg-surface p-3 flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-500/15">
-            <AlertTriangle size={20} className="text-red-400" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wider">Entregas Atrasadas</p>
-            <p className={`text-xl font-bold ${deadlineStats.atrasadas > 0 ? 'text-red-400 animate-pulse' : 'text-green-400'}`}>{deadlineStats.atrasadas}</p>
-            <p className="text-xs text-gray-500">{deadlineStats.atrasadas === 0 ? 'tudo em dia ✅' : 'atenção!'}</p>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Content area */}

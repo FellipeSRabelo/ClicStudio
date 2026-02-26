@@ -353,18 +353,16 @@ export function TarefasPage() {
             const badgeStyle = dl.status === 'critical' ? DEADLINE_BADGE.critical : dl.status === 'urgent' ? DEADLINE_BADGE.urgent : null
             return (
             <tr key={tarefa.id} className="hover:bg-surface-light/50 transition-colors relative">
-              {/* Barra de progresso temporal */}
-              {tarefa.deadline_entrega && (
-                <td colSpan={7} className="p-0 h-0 border-0">
-                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-800/40 rounded-t overflow-hidden">
+              <td className="px-4 py-3 relative">
+                {/* Barra de progresso temporal - absolute no topo da row */}
+                {tarefa.deadline_entrega && (
+                  <div className="absolute top-0 left-0 right-0 h-[3px] bg-gray-800/40 overflow-hidden" style={{ width: '700%' }}>
                     <div
                       className={`h-full transition-all duration-500 ${bar.colorClass}`}
                       style={{ width: `${bar.percent}%` }}
                     />
                   </div>
-                </td>
-              )}
-              <td className="px-4 py-3">
+                )}
                 <button onClick={() => toggleRealizado(tarefa)} className="cursor-pointer">
                   {tarefa.realizado ? (
                     <CheckCircle2 size={18} className="text-green-500" />
